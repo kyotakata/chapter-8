@@ -81,7 +81,7 @@ export const HomePage = () => {
       try{
         const res = await fetch('https://xecvneb0ei.microcms.io/api/v1/posts', {　// 管理画面で取得したエンドポイントを入力してください。
           headers: {　// fetch関数の第二引数にheadersを設定でき、その中にAPIキーを設定します。
-            'X-MICROCMS-API-KEY': 'u4A18rPHAnk239UOFydFHTLEDgye3X8BnQb6', // 管理画面で取得したAPIキーを入力してください。
+            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_APY_KEY as string, // 管理画面で取得したAPIキーを入力してください。
           },
         })
         const { contents } = await res.json()
