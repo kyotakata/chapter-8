@@ -1,4 +1,3 @@
-import { Header } from "./_components/Header";
 import { HomePage } from "./_components/HomePage";
 
 

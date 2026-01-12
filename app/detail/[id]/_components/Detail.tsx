@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { MicroCmsPost } from "../_types/MicroCmsPost";
+import type { MicroCmsPost } from "../../../_types/MicroCmsPost";
 import Image from "next/image";
 
 const detailContainerStyle: React.CSSProperties = {
