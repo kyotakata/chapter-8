@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import type { MicroCmsPost } from "../_types/MicroCmsPost";
+import type { PostsIndexResponse } from "@/app/api/posts/route";
 
 const homeContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -45,6 +45,7 @@ const homePostDateStyle: React.CSSProperties = {
 const homePostCategoriesStyle: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
+  marginLeft: "1rem"
 }
 
 const homePostCategoryStyle: React.CSSProperties = {
@@ -56,7 +57,7 @@ const homePostCategoryStyle: React.CSSProperties = {
   padding: ".2rem .4rem",
 }
 
-const homePostTitleStyle: React.CSSProperties =  {
+const homePostTitleStyle: React.CSSProperties = {
   fontSize: "1.5rem",
   marginBottom: "1rem",
   marginTop: ".5rem",
@@ -74,26 +75,22 @@ const homePostBodyStyle: React.CSSProperties = {
 
 
 export const HomePage = () => {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]); 
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [posts, setPosts] = useState<PostsIndexResponse["posts"]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     const fetcher = async () => {
-      try{
-        const res = await fetch('https://xecvneb0ei.microcms.io/api/v1/posts', {　// 管理画面で取得したエンドポイントを入力してください。
-          headers: {　// fetch関数の第二引数にheadersを設定でき、その中にAPIキーを設定します。
-            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_APY_KEY as string, // 管理画面で取得したAPIキーを入力してください。
-          },
-        })
-        const { contents } = await res.json()
-        setPosts(contents)
-      }finally{
+      try {
+        const res = await fetch('api/posts')
+        const { posts } = await res.json()
+        setPosts(posts)
+      } finally {
         setLoading(false);
       }
     }
     fetcher();
   }, []);
 
-  if(loading){
+  if (loading) {
     return <div>読み込み中...</div>;
   }
 
@@ -109,13 +106,13 @@ export const HomePage = () => {
                     <div style={homePostInfoStyle}>
                       <div style={homePostDateStyle}>{new Date(post.createdAt).toISOString().slice(0, 10)}</div>
                       <div style={homePostCategoriesStyle}>
-                        {post.categories.map((cat, index) => (
-                          <div style={homePostCategoryStyle} key={index}>{cat.name}</div>
+                        {post.categories?.map((category, index) => (
+                          <div style={homePostCategoryStyle} key={index}>{category.name}</div>
                         ))}
                       </div>
                     </div>
                     <p style={homePostTitleStyle}>{post.title}</p>
-                    <div style={homePostBodyStyle} dangerouslySetInnerHTML={{ __html: post.content }}/>
+                    <div style={homePostBodyStyle} dangerouslySetInnerHTML={{ __html: post.content }} />
                   </div>
                 </div>
               </Link>
