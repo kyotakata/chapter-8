@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from 'next/navigation'
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 
@@ -9,7 +8,6 @@ export default function CategoryCreatePage() {
   const [categoryNameError, setCategoryNameError] = useState("");
   const [loading, setLoading] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const { id } = useParams()
   const router = useRouter()
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

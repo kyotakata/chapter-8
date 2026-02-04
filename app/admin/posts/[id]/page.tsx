@@ -151,7 +151,6 @@ export default function PostEditPage() {
         setCategories={setCategories}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
-        // toggleCategory={toggleCategory}
         onSubmit={onSubmit}
         onDelete={onDelete}
       />

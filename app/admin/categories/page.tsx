@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Category } from "@/app/_types/category";
+import { Category } from "@/app/api/admin/posts/[id]/route";
 
 
 const homeContainerStyle: React.CSSProperties = {
@@ -49,7 +49,6 @@ export default function AdminCategoryPage() {
     const fetcher = async () => {
       try {
         const res = await fetch('/api/admin/categories')
-        console.log(res)
         const data = await res.json()
         setCategories(data.categories)
       } finally {

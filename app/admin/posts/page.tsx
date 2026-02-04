@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Post } from "@/app/_types/post";
+import { PostIndexResponse } from "@/app/api/admin/posts/route";
 
 
 const homeContainerStyle: React.CSSProperties = {
@@ -42,15 +42,14 @@ const homePostTitleStyle: React.CSSProperties = {
 
 
 export default function AdminPostPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostIndexResponse["posts"]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     const fetcher = async () => {
       try {
         const res = await fetch('/api/admin/posts')
-        console.log(res)
-        const data = await res.json()
-        setPosts(data.posts)
+        const { posts }: { posts: PostIndexResponse["posts"] } = await res.json()
+        setPosts(posts)
       } finally {
         setLoading(false);
       }

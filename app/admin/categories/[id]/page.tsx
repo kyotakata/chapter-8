@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from 'next/navigation'
-import { Category } from "@/app/api/admin/posts/[id]/route"
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 
