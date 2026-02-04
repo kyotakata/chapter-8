@@ -1,27 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from 'next/navigation'
-import { Category } from "@/app/_types/category"
-import { redirect } from 'next/navigation'
+import { CategoryForm } from "../_components/CategoryForm";
+import { useRouter } from 'next/navigation'
 
 export default function CategoryCreatePage() {
-  const [catNameError, setCatNameError] = useState("");
+  const [categoryNameError, setCategoryNameError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const [catNameText, setCatNameText] = useState("");
-  const onChangeCategoryText = (event: React.ChangeEvent<HTMLInputElement>) => setCatNameText(event.target.value);
+  const [categoryName, setCategoryName] = useState("");
   const { id } = useParams()
+  const router = useRouter()
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
 
-    // リセット
-    setCatNameText("");
     let hasError = false;
 
-    if (catNameText.trim() === "") {
-      setCatNameError("カテゴリー名を入力してください。");
+    if (categoryName.trim() === "") {
+      setCategoryNameError("カテゴリー名を入力してください。");
       hasError = true;
     }
 
@@ -36,14 +33,14 @@ export default function CategoryCreatePage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: catNameText,
+            name: categoryName,
           }),
         }
       );
       console.log(res.status);
       if (res.ok) {
+        router.push('/admin/categories')
         alert("送信しました");
-        setCatNameText("");
       } else {
         alert(`送信失敗${res.status}`);
       }
@@ -56,31 +53,8 @@ export default function CategoryCreatePage() {
     }
     finally {
       setLoading(false);
-      redirect('/admin/categories')
     }
   };
-
-
-  const [category, setCategory] = useState<Category>();
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const res = await fetch(`/api/admin/categories/${id}`)
-        const data = await res.json()
-        setCategory(data.category)
-
-        if (data.category) {
-          const { name } = data.category;
-          setCatNameText(name);
-        }
-
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, []);
-
 
   if (loading) {
     return <div>送信中...</div>;
@@ -88,19 +62,13 @@ export default function CategoryCreatePage() {
 
   return (
     <div className="max-w-3xl mx-auto py-20">
-      <h1 className="text-xl font-bold mb-10">カテゴリー編集</h1>
-      <form onSubmit={onSubmit}>
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-full">
-            <label htmlFor="category" className="text-gray-500">カテゴリー名</label>
-            <input name="category" id="category" type="text" className="border border-gray-300 rounded-lg p-4 w-full" value={catNameText} onChange={onChangeCategoryText} />
-            {catNameError && <p className="text-sm text-red-700">{catNameError}</p>}
-          </div>
-        </div>
-        <div className="flex mt-5">
-          <button type="submit" className="bg-indigo-700 text-white py-2 px-4 rounded-lg mr-4">作成</button>
-        </div>
-      </form>
+      <h1 className="text-xl font-bold mb-10">カテゴリー作成</h1>
+      <CategoryForm
+        mode="new"
+        categoryName={categoryName}
+        setCategoryName={setCategoryName}
+        categoryNameError={categoryNameError}
+        onSubmit={onSubmit} />
     </div>
   );
 };
