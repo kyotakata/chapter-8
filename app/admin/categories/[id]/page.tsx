@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation'
 
 export default function CategoryEditPage() {
   const [categoryNameError, setCategoryNameError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const { id } = useParams()
   const router = useRouter()
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
+    setIsSubmitting(true);
 
     let hasError = false;
 
@@ -24,7 +25,6 @@ export default function CategoryEditPage() {
 
     if (hasError) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/categories/${id}`,
         {
@@ -52,18 +52,19 @@ export default function CategoryEditPage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const onDelete = async () => {
+    setIsSubmitting(true);
+
     if (!id) {
       alert('IDがありません');
       return;
     }
     if (!confirm('このカテゴリーを本当に削除しますか？')) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
@@ -82,7 +83,7 @@ export default function CategoryEditPage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -98,14 +99,14 @@ export default function CategoryEditPage() {
           setCategoryName(name);
         }
       } finally {
-        setLoading(false);
+        setIsSubmitting(false);
       }
     }
     fetcher();
   }, []);
 
 
-  if (loading) {
+  if (isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -118,7 +119,8 @@ export default function CategoryEditPage() {
         setCategoryName={setCategoryName}
         categoryNameError={categoryNameError}
         onSubmit={onSubmit}
-        onDelete={onDelete} />
+        onDelete={onDelete}
+        disabled={isSubmitting} />
     </div>
   );
 };

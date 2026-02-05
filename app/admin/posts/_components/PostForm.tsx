@@ -18,6 +18,7 @@ interface Props {
   setSelectedCategories: (categories: Category[]) => void
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
   onDelete?: () => void    // ?で引数指定なしでもよくなる
+  disabled: boolean
 }
 
 export const PostForm: React.FC<Props> = ({
@@ -36,6 +37,7 @@ export const PostForm: React.FC<Props> = ({
   setSelectedCategories,
   onSubmit,
   onDelete,
+  disabled,
 }) => {
 
   const toggleCategory = (id: number) => {
@@ -61,21 +63,21 @@ export const PostForm: React.FC<Props> = ({
       <div className="flex justify-between items-center mb-6">
         <div className="w-full">
           <label htmlFor="title" className="text-gray-500">タイトル</label>
-          <input name="title" id="title" type="text" className="border border-gray-300 rounded-lg p-4 w-full" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input name="title" id="title" type="text" className="border border-gray-300 rounded-lg p-4 w-full" value={title} onChange={(e) => setTitle(e.target.value)} disabled={disabled} />
           {titleError && <p className="text-sm text-red-700">{titleError}</p>}
         </div>
       </div>
       <div className="flex justify-between items-center mb-6">
         <div className="w-full">
           <label htmlFor="content" className="text-gray-500">内容</label>
-          <textarea name="content" id="content" rows={4} className="border border-gray-300 rounded-lg p-4 w-full" value={content} onChange={(e) => setContent(e.target.value)} />
+          <textarea name="content" id="content" rows={4} className="border border-gray-300 rounded-lg p-4 w-full" value={content} onChange={(e) => setContent(e.target.value)} disabled={disabled} />
           {contentError && <p className="text-sm text-red-700">{contentError}</p>}
         </div>
       </div>
       <div className="flex justify-between items-center mb-6">
         <div className="w-full">
           <label htmlFor="thumbnail" className="text-gray-500">サムネイルURL</label>
-          <input name="thumbnail" id="thumbnail" type="text" className="w-full border border-gray-300 rounded-lg p-4" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} />
+          <input name="thumbnail" id="thumbnail" type="text" className="w-full border border-gray-300 rounded-lg p-4" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} disabled={disabled} />
         </div>
       </div>
       <div className="flex justify-between items-center mb-6">
@@ -88,6 +90,7 @@ export const PostForm: React.FC<Props> = ({
                 key={category.id}
                 type="button"
                 onClick={() => toggleCategory(category.id)}
+                disabled={disabled}
                 className={isSelected
                   ? 'rounded-full border px-3 py-1 text-sm border-blue-600 bg-blue-600 text-white'
                   : ' rounded-full border px-3 py-1 text-sm border-gray-300 bg-white text-gray-800'
@@ -98,12 +101,12 @@ export const PostForm: React.FC<Props> = ({
         </div>
       </div>
       <div className="flex mt-5">
-        <button type="submit" className="bg-indigo-700 text-white py-2 px-4 rounded-lg mr-4">
+        <button type="submit" className="bg-indigo-700 text-white py-2 px-4 rounded-lg mr-4" disabled={disabled}>
           {mode === 'new' ? '作成' : '更新'}
         </button>
         {mode === 'edit' && <button type="button"
           onClick={onDelete}
-          className="bg-rose-700 text-white py-2 px-4 rounded-lg">
+          className="bg-rose-700 text-white py-2 px-4 rounded-lg" disabled={disabled}>
           削除
         </button>}
       </div>

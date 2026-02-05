@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation'
 
 export default function CategoryCreatePage() {
   const [categoryNameError, setCategoryNameError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const router = useRouter()
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
+    setIsSubmitting(true);
 
     let hasError = false;
 
@@ -22,7 +23,6 @@ export default function CategoryCreatePage() {
 
     if (hasError) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/categories`,
         {
@@ -50,11 +50,11 @@ export default function CategoryCreatePage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -66,7 +66,8 @@ export default function CategoryCreatePage() {
         categoryName={categoryName}
         setCategoryName={setCategoryName}
         categoryNameError={categoryNameError}
-        onSubmit={onSubmit} />
+        onSubmit={onSubmit}
+        disabled={isSubmitting} />
     </div>
   );
 };

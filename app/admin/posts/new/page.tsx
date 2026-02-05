@@ -8,7 +8,7 @@ import { PostForm } from "../_components/PostForm";
 export default function PostCreatePage() {
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -19,6 +19,7 @@ export default function PostCreatePage() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
+    setIsSubmitting(true);
 
     let hasError = false;
 
@@ -34,7 +35,6 @@ export default function PostCreatePage() {
 
     if (hasError) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/posts`,
         {
@@ -65,7 +65,7 @@ export default function PostCreatePage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -84,7 +84,7 @@ export default function PostCreatePage() {
         }
 
       } finally {
-        setLoading(false);
+        setIsSubmitting(false);
       }
     }
     fetcher();
@@ -93,7 +93,7 @@ export default function PostCreatePage() {
 
 
 
-  if (loading) {
+  if (isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -114,6 +114,7 @@ export default function PostCreatePage() {
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
         onSubmit={onSubmit}
+        disabled={isSubmitting}
       />
     </div>
   );

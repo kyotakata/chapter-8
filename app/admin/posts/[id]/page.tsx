@@ -10,7 +10,7 @@ import { PostForm } from "../_components/PostForm";
 export default function PostEditPage() {
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -22,6 +22,8 @@ export default function PostEditPage() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
+
+    setIsSubmitting(true);
 
     // チェック
     let hasError = false;
@@ -36,8 +38,6 @@ export default function PostEditPage() {
     }
 
     if (hasError) return;
-
-    setLoading(true);
 
     // 更新
     try {
@@ -70,18 +70,19 @@ export default function PostEditPage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const onDelete = async () => {
+    setIsSubmitting(true);
+
     if (!id) {
       alert('IDがありません');
       return;
     }
     if (!confirm('このカテゴリーを本当に削除しますか？')) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
@@ -100,7 +101,7 @@ export default function PostEditPage() {
       }
     }
     finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -124,14 +125,14 @@ export default function PostEditPage() {
         setSelectedCategories((post.postCategories ?? []).map((pc) => pc.category))
 
       } finally {
-        setLoading(false);
+        setIsSubmitting(false);
       }
     }
     fetcher();
   }, []);
 
 
-  if (loading) {
+  if (isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -153,6 +154,7 @@ export default function PostEditPage() {
         setSelectedCategories={setSelectedCategories}
         onSubmit={onSubmit}
         onDelete={onDelete}
+        disabled={isSubmitting}
       />
     </div>
 
