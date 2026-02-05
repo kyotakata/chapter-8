@@ -110,13 +110,8 @@ export default function PostEditPage() {
     const fetcher = async () => {
       try {
         //投稿ページ取得
-        const postRes = await fetch(`/api/admin/posts/${id}`)
-        //カテゴリ一覧取得
-        const categoriesRes = await fetch(`/api/admin/categories`)
-        const { post }: { post: PostShowResponse["post"] } = await postRes.json()//分割代入して型定義しているだけ
-        const { categories } = await categoriesRes.json()
-        setCategories(categories)
-
+        const res = await fetch(`/api/admin/posts/${id}`)
+        const { post }: { post: PostShowResponse["post"] } = await res.json()//分割代入して型定義しているだけ
         setTitle(post.title);
         setContent(post.content);
         setThumbnailUrl(post.thumbnailUrl);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Category } from "@/app/api/admin/posts/[id]/route"
+import { useEffect } from "react";
 
 interface Props {
   mode: "new" | "edit"    // 文字列リテラル型のunion型のイメージ
@@ -39,6 +40,22 @@ export const PostForm: React.FC<Props> = ({
   onDelete,
   disabled,
 }) => {
+
+  useEffect(() => {
+    const fetcher = async () => {
+      try {
+        disabled = true;
+
+        //カテゴリ一覧取得
+        const categoriesRes = await fetch(`/api/admin/categories`)
+        const { categories } = await categoriesRes.json()
+        setCategories(categories)
+      } finally {
+        disabled = false;
+      }
+    }
+    fetcher();
+  }, [])
 
   const toggleCategory = (id: number) => {
     const exists = selectedCategories.some((category) => category.id === id)
