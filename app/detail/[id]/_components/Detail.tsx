@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { MicroCmsPost } from "../../../_types/MicroCmsPost";
+import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
 
 const detailContainerStyle: React.CSSProperties = {
@@ -50,7 +50,7 @@ const detailPostCategoryStyle: React.CSSProperties = {
   padding: ".2rem .4rem",
 }
 
-const detailPostTitleStyle: React.CSSProperties =  {
+const detailPostTitleStyle: React.CSSProperties = {
   fontSize: "1.5rem",
   marginBottom: "1rem",
   marginTop: ".5rem",
@@ -65,33 +65,26 @@ const detailPostBodyStyle: React.CSSProperties = {
 }
 
 export const Detail = () => {
-  const [post, setPost] = useState<MicroCmsPost>(); 
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [post, setPost] = useState<PostShowResponse["post"]>();
+  const [loading, setLoading] = useState<boolean>(true);
   const params = useParams();
   const id = params?.id as string | undefined;
 
   useEffect(() => {
     if (!id) return;
     const fetcher = async () => {
-      try{
-        const res = await fetch(`https://xecvneb0ei.microcms.io/api/v1/posts/${encodeURIComponent(id)}`, {　// 管理画面で取得したエンドポイントを入力してください。
-          headers: {　// fetch関数の第二引数にheadersを設定でき、その中にAPIキーを設定します。
-            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_APY_KEY as string, // 管理画面で取得したAPIキーを入力してください。
-          },
-        });
-        console.log(res);
-        const data = await res.json();
-        console.log(data);
-
-        setPost(data);
-      }finally{
+      try {
+        const res = await fetch(`/api/posts/${id}`);
+        const { post } = await res.json();
+        setPost(post);
+      } finally {
         setLoading(false);
       }
     }
     fetcher();
   }, [id]);
 
-  if(loading){
+  if (loading) {
     return <div>読み込み中...</div>;
   }
 
@@ -102,20 +95,20 @@ export const Detail = () => {
     <div style={detailContainerStyle}>
       <div style={detailPostStyle}>
         <div style={detailPostImageStyle}>
-          <Image src={post.thumbnail.url} alt="" width={post.thumbnail.width} height={post.thumbnail.height}/>
+          <Image src={post.thumbnailUrl} alt="" width={800} height={400} />
         </div>
         <div style={detailPostContentStyle}>
           <div style={detailPostInfoStyle}>
-            <div style={detailPostDateStyle}>{new Date(post.createdAt).toISOString().slice(0, 10)}</div>
+            <div style={detailPostDateStyle}>{new Date(post.createdAt).toLocaleDateString("ja-JP")}</div>
             <div style={detailPostCategoriesStyle}>
-              {post.categories.map((cat, index) => (
-                <div style={detailPostCategoryStyle} key={index}>{cat.name}</div>
+              {post.postCategories?.map((cat, index) => (
+                <div style={detailPostCategoryStyle} key={index}>{cat.category.name}</div>
               ))}
             </div>
           </div>
         </div>
         <div style={detailPostTitleStyle}>{post.title}</div>
-        <div style={detailPostBodyStyle} dangerouslySetInnerHTML={{ __html: post.content }}/>
+        <div style={detailPostBodyStyle} dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
     </div>
   );
