@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Category } from "@/app/api/admin/posts/[id]/route"
 import { useRouter } from 'next/navigation'
 import { PostForm } from "../_components/PostForm";
+import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 
 export default function PostCreatePage() {
   const [titleError, setTitleError] = useState("");
@@ -35,6 +36,12 @@ export default function PostCreatePage() {
 
     if (hasError) return;
 
+    const body: CreatePostRequestBody = {
+      title: title,
+      content: content,
+      categories: selectedCategories,
+      thumbnailUrl: thumbnailUrl,
+    }
     try {
       const res = await fetch(`/api/admin/posts`,
         {
@@ -42,12 +49,7 @@ export default function PostCreatePage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            title: title,
-            content: content,
-            categories: selectedCategories,
-            thumbnailUrl: thumbnailUrl,
-          }),
+          body: JSON.stringify(body),
         }
       );
       console.log(res.status);

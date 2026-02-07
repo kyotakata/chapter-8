@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Category } from "@/app/api/admin/posts/[id]/route";
-
+import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -43,14 +43,14 @@ const homePostTitleStyle: React.CSSProperties = {
 
 
 export default function AdminCategoryPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryIndexResponse["categories"]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     const fetcher = async () => {
       try {
         const res = await fetch('/api/admin/categories')
-        const data = await res.json()
-        setCategories(data.categories)
+        const { categories }: { categories: CategoryIndexResponse["categories"] } = await res.json()
+        setCategories(categories)
       } finally {
         setLoading(false);
       }

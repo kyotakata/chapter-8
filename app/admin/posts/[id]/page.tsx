@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { PostShowResponse } from "@/app/api/admin/posts/[id]/route";
 import { Category } from "@/app/api/admin/posts/[id]/route"
 import { PostForm } from "../_components/PostForm";
+import { UpdatePostRequestBody } from "@/app/api/admin/posts/[id]/route";
 
 export default function PostEditPage() {
   const [titleError, setTitleError] = useState("");
@@ -39,6 +40,13 @@ export default function PostEditPage() {
 
     if (hasError) return;
 
+    const body: UpdatePostRequestBody = {
+      title: title,
+      content: content,
+      categories: selectedCategories,
+      thumbnailUrl: thumbnailUrl,
+    }
+
     // 更新
     try {
       const res = await fetch(`/api/admin/posts/${id}`,
@@ -47,12 +55,7 @@ export default function PostEditPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            title: title,
-            content: content,
-            categories: selectedCategories,
-            thumbnailUrl: thumbnailUrl,
-          }),
+          body: JSON.stringify(body),
         }
       );
 

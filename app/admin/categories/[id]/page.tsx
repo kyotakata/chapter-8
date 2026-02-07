@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams } from 'next/navigation'
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
+import { UpdateCategoryRequestBody } from "@/app/api/admin/categories/[id]/route";
+import { CategoryShowResponse } from "@/app/api/admin/categories/[id]/route";
 
 export default function CategoryEditPage() {
   const [categoryNameError, setCategoryNameError] = useState("");
@@ -25,6 +27,8 @@ export default function CategoryEditPage() {
 
     if (hasError) return;
 
+    const body: UpdateCategoryRequestBody = { name: categoryName }
+
     try {
       const res = await fetch(`/api/admin/categories/${id}`,
         {
@@ -33,7 +37,7 @@ export default function CategoryEditPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: categoryName,
+            body,
           }),
         }
       );
@@ -92,10 +96,10 @@ export default function CategoryEditPage() {
     const fetcher = async () => {
       try {
         const res = await fetch(`/api/admin/categories/${id}`)
-        const data = await res.json()
+        const { category }: { category: CategoryShowResponse["category"] } = await res.json()
 
-        if (data.category) {
-          const { name } = data.category;
+        if (category) {
+          const { name } = category;
           setCategoryName(name);
         }
       } finally {

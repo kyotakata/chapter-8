@@ -38,7 +38,7 @@ export const GET = async () => {
       },
     })
 
-    return NextResponse.json({ posts }, { status: 200 })
+    return NextResponse.json<PostIndexResponse>({ posts }, { status: 200 })
   } catch (error) {
     if (error instanceof Error)
       return NextResponse.json({ message: error.message }, { status: 400 })

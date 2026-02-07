@@ -80,8 +80,8 @@ export default function Page() {
   useEffect(() => {
     const fetcher = async () => {
       try {
-        const res = await fetch('api/posts')
-        const { posts } = await res.json()
+        const res = await fetch('/api/posts')
+        const { posts }: { posts: PostsIndexResponse["posts"] } = await res.json()
         setPosts(posts)
       } finally {
         setLoading(false);

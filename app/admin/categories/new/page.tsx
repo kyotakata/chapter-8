@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
+import { CreateCategoryRequestBody } from "@/app/api/admin/categories/route";
 
 export default function CategoryCreatePage() {
   const [categoryNameError, setCategoryNameError] = useState("");
@@ -23,6 +24,8 @@ export default function CategoryCreatePage() {
 
     if (hasError) return;
 
+    const body: CreateCategoryRequestBody = { name: categoryName }// categoryNameをnameにすると{ name }という書き方(省略)ができる
+
     try {
       const res = await fetch(`/api/admin/categories`,
         {
@@ -30,9 +33,7 @@ export default function CategoryCreatePage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: categoryName,
-          }),
+          body: JSON.stringify(body),
         }
       );
       console.log(res.status);
