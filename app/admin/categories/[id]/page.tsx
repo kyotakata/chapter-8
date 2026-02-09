@@ -16,10 +16,9 @@ export default function CategoryEditPage() {
   const router = useRouter()
   const { token } = useSupabaseSession()
 
-  if (!token) return
-
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
+    if (!token) return
 
     let hasError = false;
 
@@ -29,8 +28,6 @@ export default function CategoryEditPage() {
     }
 
     if (hasError) return;
-
-
 
     try {
       setIsSubmitting(true);
