@@ -6,6 +6,7 @@ import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 import { UpdateCategoryRequestBody } from "@/app/api/admin/categories/[id]/route";
 import { CategoryShowResponse } from "@/app/api/admin/categories/[id]/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function CategoryEditPage() {
   const [categoryNameError, setCategoryNameError] = useState("");
@@ -13,10 +14,12 @@ export default function CategoryEditPage() {
   const [categoryName, setCategoryName] = useState("");
   const { id } = useParams()
   const router = useRouter()
+  const { token } = useSupabaseSession()
+
+  if (!token) return
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
-    setIsSubmitting(true);
 
     let hasError = false;
 
@@ -27,18 +30,20 @@ export default function CategoryEditPage() {
 
     if (hasError) return;
 
-    const body: UpdateCategoryRequestBody = { name: categoryName }
+
 
     try {
+      setIsSubmitting(true);
+      const body: UpdateCategoryRequestBody = { name: categoryName }
+
       const res = await fetch(`/api/admin/categories/${id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token,
           },
-          body: JSON.stringify({
-            body,
-          }),
+          body: JSON.stringify(body),
         }
       );
       console.log(res.status);
@@ -61,7 +66,7 @@ export default function CategoryEditPage() {
   };
 
   const onDelete = async () => {
-    setIsSubmitting(true);
+    if (!token) return
 
     if (!id) {
       alert('IDがありません');
@@ -70,8 +75,14 @@ export default function CategoryEditPage() {
     if (!confirm('このカテゴリーを本当に削除しますか？')) return;
 
     try {
+      setIsSubmitting(true);
+
       const res = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
       if (res.ok) {
         router.push('/admin/categories')
@@ -93,9 +104,18 @@ export default function CategoryEditPage() {
 
 
   useEffect(() => {
+    if (!token) return
+
     const fetcher = async () => {
+
       try {
-        const res = await fetch(`/api/admin/categories/${id}`)
+        const res = await fetch(`/api/admin/categories/${id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        })
         const { category }: { category: CategoryShowResponse["category"] } = await res.json()
 
         if (category) {
@@ -107,7 +127,7 @@ export default function CategoryEditPage() {
       }
     }
     fetcher();
-  }, []);
+  }, [token]);
 
 
   if (isSubmitting) {

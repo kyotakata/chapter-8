@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
+import { supabase } from "@/app/_libs/supabase";
 
 const detailContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -66,20 +67,41 @@ const detailPostBodyStyle: React.CSSProperties = {
 
 export const Detail = () => {
   const [post, setPost] = useState<PostShowResponse["post"]>();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const params = useParams();
   const id = params?.id as string | undefined;
+  // Imageタグのsrcにセットする画像URLを持たせるstate
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
+    null,
+  )
 
   useEffect(() => {
     if (!id) return;
     const fetcher = async () => {
       try {
+        setLoading(true);
+
         const res = await fetch(`/api/posts/${id}`);
-        const { post } = await res.json();
+
+        const { post }: { post: PostShowResponse["post"] } = await res.json();
         setPost(post);
+
+        if (!post.thumbnailImageKey) return
+
+        // アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
+        const {
+          data: { publicUrl },
+        } = await supabase.storage
+          .from('post_thumbnail')
+          .getPublicUrl(post.thumbnailImageKey)
+
+        setThumbnailImageUrl(publicUrl)
+
       } finally {
         setLoading(false);
       }
+
+
     }
     fetcher();
   }, [id]);
@@ -95,7 +117,7 @@ export const Detail = () => {
     <div style={detailContainerStyle}>
       <div style={detailPostStyle}>
         <div style={detailPostImageStyle}>
-          <Image src={post.thumbnailUrl} alt="" width={800} height={400} />
+          <Image src={thumbnailImageUrl || ""} alt="thumbnail" width={400} height={400} />
         </div>
         <div style={detailPostContentStyle}>
           <div style={detailPostInfoStyle}>

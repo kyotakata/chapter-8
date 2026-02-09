@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PostIndexResponse } from "@/app/api/admin/posts/route";
-
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -44,10 +44,22 @@ const homePostTitleStyle: React.CSSProperties = {
 export default function AdminPostPage() {
   const [posts, setPosts] = useState<PostIndexResponse["posts"]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { token } = useSupabaseSession()
+
+
   useEffect(() => {
+    if (!token) return
+
     const fetcher = async () => {
       try {
-        const res = await fetch('/api/admin/posts')
+        const res = await fetch('/api/admin/posts', {
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token, // Header に token を付与
+          },
+        })
+
         const { posts }: { posts: PostIndexResponse["posts"] } = await res.json()
         setPosts(posts)
       } finally {
@@ -55,7 +67,7 @@ export default function AdminPostPage() {
       }
     }
     fetcher();
-  }, []);
+  }, [token]);
 
   if (loading) {
     return <div>読み込み中...</div>;

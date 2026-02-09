@@ -6,7 +6,7 @@ export type PostsIndexResponse = {
     id: number
     title: string
     content: string
-    thumbnailUrl: string
+    thumbnailImageKey: string
     createdAt: string
     updatedAt: string
     categories: {
@@ -45,7 +45,7 @@ export async function GET() {
       id: post.id,
       title: post.title,
       content: post.content,
-      thumbnailUrl: post.thumbnailUrl,
+      thumbnailImageKey: post.thumbnailImageKey,
       createdAt: post.createdAt.toISOString(),
       updatedAt: post.updatedAt.toISOString(),
       categories: post.postCategories.map(pc => ({
@@ -54,7 +54,6 @@ export async function GET() {
       }))
     }))
 
-    console.log(formattedPosts)
     //レスポンスを返す
     return NextResponse.json<PostsIndexResponse>({ posts: formattedPosts }, { status: 200 })
   } catch (error) {

@@ -7,6 +7,7 @@ import { PostShowResponse } from "@/app/api/admin/posts/[id]/route";
 import { Category } from "@/app/api/admin/posts/[id]/route"
 import { PostForm } from "../_components/PostForm";
 import { UpdatePostRequestBody } from "@/app/api/admin/posts/[id]/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function PostEditPage() {
   const [titleError, setTitleError] = useState("");
@@ -15,16 +16,18 @@ export default function PostEditPage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800×400.png");
+  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams()
   const router = useRouter()
+  const { token } = useSupabaseSession()
+
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
 
-    setIsSubmitting(true);
+    if (!token) return
 
     // チェック
     let hasError = false;
@@ -44,16 +47,19 @@ export default function PostEditPage() {
       title: title,
       content: content,
       categories: selectedCategories,
-      thumbnailUrl: thumbnailUrl,
+      thumbnailImageKey: thumbnailImageKey,
     }
 
     // 更新
     try {
+      setIsSubmitting(true);
+
       const res = await fetch(`/api/admin/posts/${id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token,
           },
           body: JSON.stringify(body),
         }
@@ -78,7 +84,7 @@ export default function PostEditPage() {
   };
 
   const onDelete = async () => {
-    setIsSubmitting(true);
+    if (!token) return
 
     if (!id) {
       alert('IDがありません');
@@ -87,8 +93,14 @@ export default function PostEditPage() {
     if (!confirm('このカテゴリーを本当に削除しますか？')) return;
 
     try {
+      setIsSubmitting(true);
+
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
       if (res.ok) {
         router.push('/admin/posts')
@@ -110,14 +122,22 @@ export default function PostEditPage() {
 
 
   useEffect(() => {
+    if (!token) return
     const fetcher = async () => {
+
       try {
         //投稿ページ取得
-        const res = await fetch(`/api/admin/posts/${id}`)
+        const res = await fetch(`/api/admin/posts/${id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        })
         const { post }: { post: PostShowResponse["post"] } = await res.json()//分割代入して型定義しているだけ
         setTitle(post.title);
         setContent(post.content);
-        setThumbnailUrl(post.thumbnailUrl);
+        setThumbnailImageKey(post.thumbnailImageKey);
         // postCategories は { category: { id, name } }[] の形なので
         // クライアントで扱う Category[] に変換してセットする
         setSelectedCategories((post.postCategories ?? []).map((pc) => pc.category))
@@ -127,7 +147,7 @@ export default function PostEditPage() {
       }
     }
     fetcher();
-  }, []);
+  }, [token]);
 
 
   if (isSubmitting) {
@@ -144,8 +164,8 @@ export default function PostEditPage() {
         content={content}
         setContent={setContent}
         contentError={contentError}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
+        setThumbnailImageKey={setThumbnailImageKey}
         categories={categories}
         setCategories={setCategories}
         selectedCategories={selectedCategories}

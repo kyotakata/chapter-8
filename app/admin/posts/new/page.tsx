@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Category } from "@/app/api/admin/posts/[id]/route"
 import { useRouter } from 'next/navigation'
 import { PostForm } from "../_components/PostForm";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function PostCreatePage() {
   const [titleError, setTitleError] = useState("");
@@ -13,14 +14,15 @@ export default function PostCreatePage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800×400.png");
+  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const router = useRouter()
+  const { token } = useSupabaseSession()
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
-    setIsSubmitting(true);
+    if (!token) return
 
     let hasError = false;
 
@@ -36,23 +38,27 @@ export default function PostCreatePage() {
 
     if (hasError) return;
 
-    const body: CreatePostRequestBody = {
-      title: title,
-      content: content,
-      categories: selectedCategories,
-      thumbnailUrl: thumbnailUrl,
-    }
+
     try {
+      setIsSubmitting(true);
+
+      const body: CreatePostRequestBody = {
+        title: title,
+        content: content,
+        categories: selectedCategories,
+        thumbnailImageKey: thumbnailImageKey,
+      }
+
       const res = await fetch(`/api/admin/posts`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
+            Authorization: token,
           },
           body: JSON.stringify(body),
         }
       );
-      console.log(res.status);
       if (res.ok) {
         router.push('/admin/posts')
         alert("送信しました");
@@ -72,29 +78,6 @@ export default function PostCreatePage() {
   };
 
 
-
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const categoriesRes = await fetch(`/api/admin/categories`)
-        const categoriesData = await categoriesRes.json()
-
-        setCategories(categoriesData.categories)
-        if (categoriesData.categories) {
-          setCategories(categoriesData.categories);
-          console.log(categories)
-        }
-
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-    fetcher();
-  }, []);
-
-
-
-
   if (isSubmitting) {
     return <div>送信中...</div>;
   }
@@ -109,8 +92,8 @@ export default function PostCreatePage() {
         content={content}
         setContent={setContent}
         contentError={contentError}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
+        setThumbnailImageKey={setThumbnailImageKey}
         categories={categories}
         setCategories={setCategories}
         selectedCategories={selectedCategories}

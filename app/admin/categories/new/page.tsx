@@ -4,16 +4,19 @@ import { useState } from "react";
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 import { CreateCategoryRequestBody } from "@/app/api/admin/categories/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function CategoryCreatePage() {
   const [categoryNameError, setCategoryNameError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const router = useRouter()
+  const { token } = useSupabaseSession()
+
+  if (!token) return
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    // 画面リロードを防ぐ
-    setIsSubmitting(true);
 
     let hasError = false;
 
@@ -24,14 +27,18 @@ export default function CategoryCreatePage() {
 
     if (hasError) return;
 
+
     const body: CreateCategoryRequestBody = { name: categoryName }// categoryNameをnameにすると{ name }という書き方(省略)ができる
 
     try {
+      setIsSubmitting(true);
+
       const res = await fetch(`/api/admin/categories`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token, // Header に token を付与
           },
           body: JSON.stringify(body),
         }

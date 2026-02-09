@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Category } from "@/app/api/admin/posts/[id]/route";
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -45,10 +45,20 @@ const homePostTitleStyle: React.CSSProperties = {
 export default function AdminCategoryPage() {
   const [categories, setCategories] = useState<CategoryIndexResponse["categories"]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { token } = useSupabaseSession()
+
+
   useEffect(() => {
+    if (!token) return
+
     const fetcher = async () => {
       try {
-        const res = await fetch('/api/admin/categories')
+        const res = await fetch('/api/admin/categories', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token, // Header に token を付与
+          },
+        })
         const { categories }: { categories: CategoryIndexResponse["categories"] } = await res.json()
         setCategories(categories)
       } finally {
@@ -56,7 +66,7 @@ export default function AdminCategoryPage() {
       }
     }
     fetcher();
-  }, []);
+  }, [token]);
 
   if (loading) {
     return <div>読み込み中...</div>;

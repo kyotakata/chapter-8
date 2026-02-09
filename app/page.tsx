@@ -76,8 +76,11 @@ const homePostBodyStyle: React.CSSProperties = {
 
 export default function Page() {
   const [posts, setPosts] = useState<PostsIndexResponse["posts"]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+
   useEffect(() => {
+    setLoading(true);
+
     const fetcher = async () => {
       try {
         const res = await fetch('/api/posts')
@@ -98,7 +101,7 @@ export default function Page() {
     <div>
       <div style={homeContainerStyle}>
         <ul>
-          {posts.map((post) => (
+          {posts?.map((post) => (
             <li style={homeListStyle} key={post.id}>
               <Link href={`/detail/${post.id}`} style={homeLinkStyle}>
                 <div style={homePostStyle}>
