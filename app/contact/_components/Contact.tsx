@@ -3,11 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { contactSchema } from "../_libs/contactSchema";
-import { useForm } from "react-hook-form"
+import { SubmitHandler, useForm } from "react-hook-form"
+
+type FormValues = {
+  name: string
+  email: string
+  content: string
+}
 
 export const Contact = () => {
-  const [loading, setLoading] = useState(false);
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       name: "",
@@ -16,11 +21,10 @@ export const Contact = () => {
     }
   })
 
-  const onSubmit = async (values: any) => {
-    setLoading(true);
-
-    const { name, email, content } = values
+  const onSubmit: SubmitHandler<FormValues> = async (values) => {
     try {
+      const { name, email, content } = values
+      const body: FormValues = { name, email, content }
       const res = await fetch(
         "https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/contacts",
         {
@@ -28,11 +32,7 @@ export const Contact = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name,
-            email,
-            content,
-          }),
+          body: JSON.stringify(body),
         }
       );
       console.log(res.status);
@@ -49,16 +49,13 @@ export const Contact = () => {
         alert(`送信失敗`);
       }
     }
-    finally {
-      setLoading(false);
-    }
   };
 
   const onClickClear = () => {
     form.reset()
   };
 
-  if (loading) {
+  if (form.formState.isSubmitting) {
     return <div>送信中...</div>;
   }
 
