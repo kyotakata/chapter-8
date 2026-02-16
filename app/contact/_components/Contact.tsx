@@ -21,7 +21,7 @@ export const Contact = () => {
     }
   })
 
-  const onSubmit: SubmitHandler<FormValues> = async (values) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       const { name, email, content } = values
       const body: FormValues = { name, email, content }
