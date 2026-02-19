@@ -12,7 +12,7 @@ type FormValues = {
 }
 
 export const Contact = () => {
-  const form = useForm<FormValues>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       name: "",
@@ -52,36 +52,36 @@ export const Contact = () => {
   };
 
   const onClickClear = () => {
-    form.reset()
+    reset()
   };
 
-  if (form.formState.isSubmitting) {
+  if (isSubmitting) {
     return <div>送信中...</div>;
   }
 
   return (
     <div className="max-w-3xl mx-auto py-20">
       <h1 className="text-xl font-bold mb-10">問合わせフォーム</h1>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex justify-between items-center mb-6">
           <label htmlFor="name" className="w-[240px]">お名前</label>
           <div className="w-full">
-            <input id="name" type="text" className="border border-gray-300 rounded-lg p-4 w-full" {...form.register("name")} />
-            {form.formState.errors.name && <p className="text-sm text-red-700">{form.formState.errors.name.message}</p>}
+            <input id="name" type="text" className="border border-gray-300 rounded-lg p-4 w-full" {...register("name")} />
+            {errors.name && <p className="text-sm text-red-700">{errors.name.message}</p>}
           </div>
         </div>
         <div className="flex justify-between items-center mb-6">
           <label htmlFor="email" className="w-[240px]">メールアドレス</label>
           <div className="w-full">
-            <input id="email" type="email" className="border border-gray-300 rounded-lg p-4 w-full" {...form.register("email")} />
-            {form.formState.errors.email && <p className="text-sm text-red-700">{form.formState.errors.email.message}</p>}
+            <input id="email" type="email" className="border border-gray-300 rounded-lg p-4 w-full" {...register("email")} />
+            {errors.email && <p className="text-sm text-red-700">{errors.email.message}</p>}
           </div>
         </div>
         <div className="flex justify-between items-center mb-6">
           <label htmlFor="message" className="w-[240px]">本文</label>
           <div className="w-full">
-            <textarea id="message" rows={8} className="w-full border border-gray-300 rounded-lg p-4" {...form.register("content")} />
-            {form.formState.errors.content && <p className="text-sm text-red-700">{form.formState.errors.content.message}</p>}
+            <textarea id="message" rows={8} className="w-full border border-gray-300 rounded-lg p-4" {...register("content")} />
+            {errors.content && <p className="text-sm text-red-700">{errors.content.message}</p>}
           </div>
         </div>
         <div className="flex justify-center mt-10">
