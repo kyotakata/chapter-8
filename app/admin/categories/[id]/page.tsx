@@ -1,38 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from 'next/navigation'
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 import { UpdateCategoryRequestBody } from "@/app/api/admin/categories/[id]/route";
 import { CategoryShowResponse } from "@/app/api/admin/categories/[id]/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useForm } from "react-hook-form"
+import { categorySchema } from "../_libs/categorySchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormValues } from "../_components/CategoryForm"
+
 
 export default function CategoryEditPage() {
-  const [categoryNameError, setCategoryNameError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
   const { id } = useParams()
   const router = useRouter()
   const { token } = useSupabaseSession()
+  const form = useForm<FormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+    }
+  })
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
+
+  const onSubmit = async (values: FormValues) => {
     if (!token) return
 
-    let hasError = false;
-
-    if (categoryName.trim() === "") {
-      setCategoryNameError("カテゴリー名を入力してください。");
-      hasError = true;
-    }
-
-    if (hasError) return;
+    const { name } = values
 
     try {
-      setIsSubmitting(true);
-      const body: UpdateCategoryRequestBody = { name: categoryName }
-
+      const body: UpdateCategoryRequestBody = { name }
       const res = await fetch(`/api/admin/categories/${id}`,
         {
           method: "PUT",
@@ -47,6 +46,7 @@ export default function CategoryEditPage() {
       if (res.ok) {
         router.push('/admin/categories')
         alert("送信しました");
+        form.reset()
       } else {
         alert(`送信失敗${res.status}`);
       }
@@ -56,9 +56,6 @@ export default function CategoryEditPage() {
       } else {
         alert(`送信失敗`);
       }
-    }
-    finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -72,8 +69,6 @@ export default function CategoryEditPage() {
     if (!confirm('このカテゴリーを本当に削除しますか？')) return;
 
     try {
-      setIsSubmitting(true);
-
       const res = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
         headers: {
@@ -93,9 +88,6 @@ export default function CategoryEditPage() {
       } else {
         alert(`削除失敗`);
       }
-    }
-    finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -117,17 +109,21 @@ export default function CategoryEditPage() {
 
         if (category) {
           const { name } = category;
-          setCategoryName(name);
+          form.setValue("name", name);
         }
-      } finally {
-        setIsSubmitting(false);
+      } catch (e) {
+        if (e instanceof Error) {
+          alert(`取得失敗${e.message}`);
+        } else {
+          alert(`取得失敗`);
+        }
       }
     }
     fetcher();
   }, [token]);
 
 
-  if (isSubmitting) {
+  if (form.formState.isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -136,12 +132,10 @@ export default function CategoryEditPage() {
       <h1 className="text-xl font-bold mb-10">カテゴリー編集</h1>
       <CategoryForm
         mode="edit"
-        categoryName={categoryName}
-        setCategoryName={setCategoryName}
-        categoryNameError={categoryNameError}
+        form={form}
         onSubmit={onSubmit}
         onDelete={onDelete}
-        disabled={isSubmitting} />
+      />
     </div>
   );
 };
