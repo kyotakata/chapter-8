@@ -6,46 +6,34 @@ import { useRouter } from 'next/navigation'
 import { PostForm } from "../_components/PostForm";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { FormValues } from "../_components/PostForm";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { postSchema } from "../_libs/postSchema"
 
 export default function PostCreatePage() {
-  const [titleError, setTitleError] = useState("");
-  const [contentError, setContentError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const router = useRouter()
   const { token } = useSupabaseSession()
+  const form = useForm<FormValues>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      postCategories: [],
+      thumbnailImageKey: "",
+    }
+  })
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
+
+  const onSubmit = async (values: FormValues) => {
     if (!token) return
 
-    let hasError = false;
-
-    if (title.trim() === "") {
-      setTitleError("タイトルは必須です。");
-      hasError = true;
-    }
-
-    if (content.trim() === "") {
-      setContentError("内容は必須です。");
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-
     try {
-      setIsSubmitting(true);
-
+      const { title, content, postCategories, thumbnailImageKey } = values;
       const body: CreatePostRequestBody = {
         title: title,
         content: content,
-        categories: selectedCategories,
+        categories: postCategories,
         thumbnailImageKey: thumbnailImageKey,
       }
 
@@ -72,13 +60,10 @@ export default function PostCreatePage() {
         alert(`送信失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
 
-  if (isSubmitting) {
+  if (form.formState.isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -86,20 +71,8 @@ export default function PostCreatePage() {
     <div className="max-w-3xl mx-auto py-20">
       <h1 className="text-xl font-bold mb-10">記事作成</h1>
       <PostForm mode="new"
-        title={title}
-        setTitle={setTitle}
-        titleError={titleError}
-        content={content}
-        setContent={setContent}
-        contentError={contentError}
-        thumbnailImageKey={thumbnailImageKey}
-        setThumbnailImageKey={setThumbnailImageKey}
-        categories={categories}
-        setCategories={setCategories}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
+        form={form}
         onSubmit={onSubmit}
-        disabled={isSubmitting}
       />
     </div>
   );

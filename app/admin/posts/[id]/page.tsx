@@ -1,58 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { PostShowResponse } from "@/app/api/admin/posts/[id]/route";
-import { Category } from "@/app/api/admin/posts/[id]/route"
 import { PostForm } from "../_components/PostForm";
 import { UpdatePostRequestBody } from "@/app/api/admin/posts/[id]/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { postSchema } from "../_libs/postSchema"
+import { FormValues } from "../_components/PostForm";
 
 export default function PostEditPage() {
-  const [titleError, setTitleError] = useState("");
-  const [contentError, setContentError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams()
   const router = useRouter()
   const { token } = useSupabaseSession()
+  const form = useForm<FormValues>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      postCategories: [],
+      thumbnailImageKey: "",
+    }
+  })
 
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
-
+  const onSubmit = async (values: FormValues) => {
     if (!token) return
-
-    // チェック
-    let hasError = false;
-
-    if (title.trim() === "") {
-      setTitleError("タイトルは必須です。");
-      hasError = true;
-    }
-    if (content.trim() === "") {
-      setContentError("内容は必須です。");
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-    const body: UpdatePostRequestBody = {
-      title: title,
-      content: content,
-      categories: selectedCategories,
-      thumbnailImageKey: thumbnailImageKey,
-    }
 
     // 更新
     try {
-      setIsSubmitting(true);
+      const { title, content, postCategories, thumbnailImageKey } = values;
+      const body: UpdatePostRequestBody = {
+        title,
+        content,
+        categories: postCategories,
+        thumbnailImageKey: thumbnailImageKey,
+      }
 
       const res = await fetch(`/api/admin/posts/${id}`,
         {
@@ -78,9 +64,6 @@ export default function PostEditPage() {
         alert(`更新失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
   const onDelete = async () => {
@@ -90,11 +73,9 @@ export default function PostEditPage() {
       alert('IDがありません');
       return;
     }
-    if (!confirm('このカテゴリーを本当に削除しますか？')) return;
+    if (!confirm('この投稿を本当に削除しますか？')) return;
 
     try {
-      setIsSubmitting(true);
-
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
         headers: {
@@ -115,9 +96,6 @@ export default function PostEditPage() {
         alert(`削除失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
 
@@ -135,22 +113,28 @@ export default function PostEditPage() {
           },
         })
         const { post }: { post: PostShowResponse["post"] } = await res.json()//分割代入して型定義しているだけ
-        setTitle(post.title);
-        setContent(post.content);
-        setThumbnailImageKey(post.thumbnailImageKey);
-        // postCategories は { category: { id, name } }[] の形なので
-        // クライアントで扱う Category[] に変換してセットする
-        setSelectedCategories((post.postCategories ?? []).map((pc) => pc.category))
-
-      } finally {
-        setIsSubmitting(false);
+        if (post) {
+          const { title, content, postCategories, thumbnailImageKey } = post
+          form.reset({
+            title,
+            content,
+            postCategories: (postCategories ?? []).map(pc => ({ id: pc.category.id })),
+            thumbnailImageKey,
+          })
+        }
+      } catch (e) {
+        if (e instanceof Error) {
+          alert(`取得失敗${e.message}`)
+        } else {
+          alert(`取得失敗`)
+        }
       }
     }
     fetcher();
   }, [token]);
 
 
-  if (isSubmitting) {
+  if (form.formState.isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -158,23 +142,10 @@ export default function PostEditPage() {
     <div className="max-w-3xl mx-auto py-20">
       <h1 className="text-xl font-bold mb-10">記事編集</h1>
       <PostForm mode="edit"
-        title={title}
-        setTitle={setTitle}
-        titleError={titleError}
-        content={content}
-        setContent={setContent}
-        contentError={contentError}
-        thumbnailImageKey={thumbnailImageKey}
-        setThumbnailImageKey={setThumbnailImageKey}
-        categories={categories}
-        setCategories={setCategories}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
+        form={form}
         onSubmit={onSubmit}
         onDelete={onDelete}
-        disabled={isSubmitting}
       />
     </div>
-
   );
 };
