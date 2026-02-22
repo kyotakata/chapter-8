@@ -1,7 +1,7 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
@@ -43,32 +43,17 @@ const homePostTitleStyle: React.CSSProperties = {
 
 
 export default function AdminCategoryPage() {
-  const [categories, setCategories] = useState<CategoryIndexResponse["categories"]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const { token } = useSupabaseSession()
 
+  const { data, isLoading } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
+    token ? ['/api/admin/categories', token] : null,
+    ([url, token]: [string, string]) => fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    }).then(res => res.json())
+  )
+  const categories = data?.categories ?? []
 
-  useEffect(() => {
-    if (!token) return
-
-    const fetcher = async () => {
-      try {
-        const res = await fetch('/api/admin/categories', {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token, // Header に token を付与
-          },
-        })
-        const { categories }: { categories: CategoryIndexResponse["categories"] } = await res.json()
-        setCategories(categories)
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, [token]);
-
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
   }
 

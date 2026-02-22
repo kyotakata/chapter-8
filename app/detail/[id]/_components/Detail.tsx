@@ -1,7 +1,8 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
 import { supabase } from "@/app/_libs/supabase";
@@ -66,47 +67,25 @@ const detailPostBodyStyle: React.CSSProperties = {
 }
 
 export const Detail = () => {
-  const [post, setPost] = useState<PostShowResponse["post"]>();
-  const [loading, setLoading] = useState<boolean>(false);
   const params = useParams();
   const id = params?.id as string | undefined;
-  // Imageタグのsrcにセットする画像URLを持たせるstate
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
-    null,
+
+  const { data, isLoading } = useSWR<{ post: PostShowResponse["post"] }>(
+    id ? `/api/posts/${id}` : null,
+    (url: string) => fetch(url).then(res => res.json())
   )
+  const post = data?.post
 
-  useEffect(() => {
-    if (!id) return;
-    const fetcher = async () => {
-      try {
-        setLoading(true);
+  // thumbnailImageKeyからSupabaseの画像URLを導出
+  const thumbnailImageUrl = useMemo(() => {
+    if (!post?.thumbnailImageKey) return null
+    const { data: { publicUrl } } = supabase.storage
+      .from('post_thumbnail')
+      .getPublicUrl(post.thumbnailImageKey)
+    return publicUrl
+  }, [post?.thumbnailImageKey])
 
-        const res = await fetch(`/api/posts/${id}`);
-
-        const { post }: { post: PostShowResponse["post"] } = await res.json();
-        setPost(post);
-
-        if (!post.thumbnailImageKey) return
-
-        // アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
-        const {
-          data: { publicUrl },
-        } = await supabase.storage
-          .from('post_thumbnail')
-          .getPublicUrl(post.thumbnailImageKey)
-
-        setThumbnailImageUrl(publicUrl)
-
-      } finally {
-        setLoading(false);
-      }
-
-
-    }
-    fetcher();
-  }, [id]);
-
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
   }
 

@@ -1,7 +1,7 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import useSWR from "swr";
 import type { PostsIndexResponse } from "@/app/api/posts/route";
 
 const homeContainerStyle: React.CSSProperties = {
@@ -75,25 +75,13 @@ const homePostBodyStyle: React.CSSProperties = {
 
 
 export default function Page() {
-  const [posts, setPosts] = useState<PostsIndexResponse["posts"]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { data, isLoading } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
+    '/api/posts',
+    (url: string) => fetch(url).then(res => res.json())
+  )
+  const posts = data?.posts ?? []
 
-  useEffect(() => {
-    setLoading(true);
-
-    const fetcher = async () => {
-      try {
-        const res = await fetch('/api/posts')
-        const { posts }: { posts: PostsIndexResponse["posts"] } = await res.json()
-        setPosts(posts)
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
   }
 

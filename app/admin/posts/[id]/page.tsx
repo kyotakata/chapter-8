@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../_libs/postSchema"
 import { FormValues } from "../_components/PostForm";
+import useSWR from "swr";
 
 export default function PostEditPage() {
   const { id } = useParams()
@@ -26,6 +27,25 @@ export default function PostEditPage() {
     }
   })
 
+  // SWRで投稿データを取得
+  const { data } = useSWR<{ post: PostShowResponse["post"] }>(
+    token ? [`/api/admin/posts/${id}`, token] : null,
+    ([url, token]: [string, string]) => fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    }).then(res => res.json())
+  )
+
+  // 取得データをフォームに反映
+  useEffect(() => {
+    if (!data?.post) return
+    const { title, content, postCategories, thumbnailImageKey } = data.post
+    form.reset({
+      title,
+      content,
+      postCategories: (postCategories ?? []).map(pc => ({ id: pc.category.id })),
+      thumbnailImageKey,
+    })
+  }, [data])
 
   const onSubmit = async (values: FormValues) => {
     if (!token) return
@@ -97,41 +117,6 @@ export default function PostEditPage() {
       }
     }
   };
-
-
-  useEffect(() => {
-    if (!token) return
-    const fetcher = async () => {
-
-      try {
-        //投稿ページ取得
-        const res = await fetch(`/api/admin/posts/${id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-        })
-        const { post }: { post: PostShowResponse["post"] } = await res.json()//分割代入して型定義しているだけ
-        if (post) {
-          const { title, content, postCategories, thumbnailImageKey } = post
-          form.reset({
-            title,
-            content,
-            postCategories: (postCategories ?? []).map(pc => ({ id: pc.category.id })),
-            thumbnailImageKey,
-          })
-        }
-      } catch (e) {
-        if (e instanceof Error) {
-          alert(`取得失敗${e.message}`)
-        } else {
-          alert(`取得失敗`)
-        }
-      }
-    }
-    fetcher();
-  }, [token]);
 
 
   if (form.formState.isSubmitting) {

@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form"
 import { categorySchema } from "../_libs/categorySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormValues } from "../_components/CategoryForm"
+import useSWR from "swr";
 
 
 export default function CategoryEditPage() {
@@ -23,6 +24,20 @@ export default function CategoryEditPage() {
       name: "",
     }
   })
+
+  // SWRでカテゴリーデータを取得
+  const { data } = useSWR<{ category: CategoryShowResponse["category"] }>(
+    token ? [`/api/admin/categories/${id}`, token] : null,
+    ([url, token]: [string, string]) => fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    }).then(res => res.json())
+  )
+
+  // 取得データをフォームに反映
+  useEffect(() => {
+    if (!data?.category) return
+    form.setValue("name", data.category.name)
+  }, [data])
 
 
   const onSubmit = async (values: FormValues) => {
@@ -90,37 +105,6 @@ export default function CategoryEditPage() {
       }
     }
   };
-
-
-  useEffect(() => {
-    if (!token) return
-
-    const fetcher = async () => {
-
-      try {
-        const res = await fetch(`/api/admin/categories/${id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-        })
-        const { category }: { category: CategoryShowResponse["category"] } = await res.json()
-
-        if (category) {
-          const { name } = category;
-          form.setValue("name", name);
-        }
-      } catch (e) {
-        if (e instanceof Error) {
-          alert(`取得失敗${e.message}`);
-        } else {
-          alert(`取得失敗`);
-        }
-      }
-    }
-    fetcher();
-  }, [token]);
 
 
   if (form.formState.isSubmitting) {

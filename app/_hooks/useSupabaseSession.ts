@@ -11,6 +11,8 @@ export const useSupabaseSession = () => {
 
   useEffect(() => {
     const fetcher = async () => {
+      // getSessionがブラウザに保存済みのセッションを読み取り、
+      // その中のaccess_token(=JWTトークン)をtokenステートにセットしている。
       const {
         data: { session },
       } = await supabase.auth.getSession()

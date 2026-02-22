@@ -1,13 +1,14 @@
 "use client";
 
 import { Category } from "@/app/api/admin/posts/[id]/route"
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useMemo } from "react";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { supabase } from '@/app/_libs/supabase'
 import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
 import Image from "next/image"
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route"
 import { UseFormReturn } from "react-hook-form";
+import useSWR from "swr";
 
 export type FormValues = {
   title: string,
@@ -30,40 +31,26 @@ export const PostForm: React.FC<Props> = ({
   onDelete,
 }) => {
   const { token } = useSupabaseSession()
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
   const { register, handleSubmit, reset, formState: { errors, isSubmitting }, watch, setValue } = form
   const thumbnailImageKey = watch("thumbnailImageKey")
   const postCategories = watch("postCategories") || []
 
-  useEffect(() => {
-    if (!token) return
+  // SWRでカテゴリー一覧を取得
+  const { data: categoriesData } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
+    token ? ['/api/admin/categories', token] : null,
+    ([url, token]: [string, string]) => fetch(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    }).then(res => res.json())
+  )
+  const categories = categoriesData?.categories ?? []
 
-    const fetchCategories = async () => {
-      //カテゴリ一覧取得
-      const res = await fetch(`/api/admin/categories`, {
-        method: "GET",
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      })
-      const { categories }: { categories: CategoryIndexResponse["categories"] } = await res.json()
-      setCategories(categories)
-    }
-
-    fetchCategories();
-  }, [token, setValue])
-
-
-  useEffect(() => {
-    if (!thumbnailImageKey) return
-
+  // thumbnailImageKeyからSupabaseの画像URLを導出
+  const thumbnailImageUrl = useMemo(() => {
+    if (!thumbnailImageKey) return null
     const { data } = supabase.storage
       .from('post_thumbnail')
       .getPublicUrl(thumbnailImageKey)
-
-    setThumbnailImageUrl(data.publicUrl)
+    return data.publicUrl
   }, [thumbnailImageKey])
 
 

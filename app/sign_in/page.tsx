@@ -2,7 +2,6 @@
 
 import { supabase } from '@/app/_libs/supabase'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useForm } from "react-hook-form"
 
 type FormValues = {
@@ -23,6 +22,8 @@ export default function Page() {
   const onSubmit = async (values: FormValues) => {
     const { email, password } = values;
 
+    // signInWithPasswordを呼出し時、Supabaseがメール/パスワードを検証し、
+    // 成功するとJWTトークンを含むセッション情報をブラウザ内部に自動保存する。
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
