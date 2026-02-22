@@ -1,8 +1,12 @@
 'use client'
 
 import { supabase } from '@/app/_libs/supabase' // 前の工程で作成したファイル
-import { useState } from 'react'
 import { useForm } from "react-hook-form"
+
+type FormValues = {
+  email: string
+  password: string
+}
 
 export default function Page() {
   const form = useForm({
@@ -12,10 +16,7 @@ export default function Page() {
     },
   })
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const onSubmit = async (values: any) => {
-    setIsSubmitting(true)
+  const onSubmit = async (values: FormValues) => {
     const { email, password } = values;
 
     const { error } = await supabase.auth.signUp({
@@ -33,7 +34,6 @@ export default function Page() {
       // form.resetField("password")
       alert('確認メールを送信しました。')
     }
-    setIsSubmitting(false)
   }
 
   return (
@@ -53,7 +53,7 @@ export default function Page() {
             placeholder="name@company.com"
             required
             {...form.register("email")}
-            disabled={isSubmitting}
+            disabled={form.formState.isSubmitting}
             autoComplete="off"
           />
         </div>
@@ -71,7 +71,7 @@ export default function Page() {
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             required
             {...form.register("password")}
-            disabled={isSubmitting}
+            disabled={form.formState.isSubmitting}
             autoComplete="new-password"
           />
         </div>
@@ -80,7 +80,7 @@ export default function Page() {
           <button
             type="submit"
             className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-            disabled={isSubmitting}
+            disabled={form.formState.isSubmitting}
           >
             登録
           </button>
