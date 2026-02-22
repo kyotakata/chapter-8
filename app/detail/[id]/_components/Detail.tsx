@@ -1,9 +1,13 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
+import { supabase } from "@/app/_libs/supabase";
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const detailContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -64,38 +68,34 @@ const detailPostBodyStyle: React.CSSProperties = {
   overflow: "hidden",
 }
 
+
 export const Detail = () => {
-  const [post, setPost] = useState<PostShowResponse["post"]>();
-  const [loading, setLoading] = useState<boolean>(true);
   const params = useParams();
   const id = params?.id as string | undefined;
+  const { data, isLoading, error, mutate } = useFetch<{ post: PostShowResponse["post"] }>(
+    id ? `/api/posts/${id}` : "",
+  )
+  const post = data?.post
 
-  useEffect(() => {
-    if (!id) return;
-    const fetcher = async () => {
-      try {
-        const res = await fetch(`/api/posts/${id}`);
-        const { post } = await res.json();
-        setPost(post);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, [id]);
+  // thumbnailImageKeyからSupabaseの画像URLを導出
+  const thumbnailImageUrl = useMemo(() => {
+    if (!post?.thumbnailImageKey) return null
+    const { data: { publicUrl } } = supabase.storage
+      .from('post_thumbnail')
+      .getPublicUrl(post.thumbnailImageKey)
+    return publicUrl
+  }, [post?.thumbnailImageKey])
 
-  if (loading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error || !post) return <div>読み込めませんでした...</div>;
 
-  if (!post) {
-    return <div>記事が見つかりませんでした</div>;
-  }
   return (
     <div style={detailContainerStyle}>
       <div style={detailPostStyle}>
         <div style={detailPostImageStyle}>
-          <Image src={post.thumbnailUrl} alt="" width={800} height={400} />
+          {thumbnailImageUrl && (
+            <Image src={thumbnailImageUrl} alt="thumbnail" width={400} height={400} />
+          )}
         </div>
         <div style={detailPostContentStyle}>
           <div style={detailPostInfoStyle}>

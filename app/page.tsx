@@ -1,8 +1,9 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import type { PostsIndexResponse } from "@/app/api/posts/route";
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const homeContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -73,32 +74,19 @@ const homePostBodyStyle: React.CSSProperties = {
 }
 
 
-
 export default function Page() {
-  const [posts, setPosts] = useState<PostsIndexResponse["posts"]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const res = await fetch('/api/posts')
-        const { posts }: { posts: PostsIndexResponse["posts"] } = await res.json()
-        setPosts(posts)
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, []);
+  const { data, isLoading, error, mutate } = useFetch<{ posts: PostsIndexResponse["posts"] }>(
+    '/api/posts'
+  )
 
-  if (loading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
       <div style={homeContainerStyle}>
         <ul>
-          {posts.map((post) => (
+          {data?.posts?.map((post) => (
             <li style={homeListStyle} key={post.id}>
               <Link href={`/detail/${post.id}`} style={homeLinkStyle}>
                 <div style={homePostStyle}>

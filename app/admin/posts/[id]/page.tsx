@@ -1,59 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { PostShowResponse } from "@/app/api/admin/posts/[id]/route";
-import { Category } from "@/app/api/admin/posts/[id]/route"
 import { PostForm } from "../_components/PostForm";
 import { UpdatePostRequestBody } from "@/app/api/admin/posts/[id]/route";
+import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { postSchema } from "../_libs/postSchema"
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 export default function PostEditPage() {
-  const [titleError, setTitleError] = useState("");
-  const [contentError, setContentError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("https://placehold.jp/800×400.png");
-  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams()
   const router = useRouter()
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
-
-    setIsSubmitting(true);
-
-    // チェック
-    let hasError = false;
-
-    if (title.trim() === "") {
-      setTitleError("タイトルは必須です。");
-      hasError = true;
+  const { token } = useSupabaseSession()
+  const form = useForm<CreatePostRequestBody>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      postCategories: [],
+      thumbnailImageKey: "",
     }
-    if (content.trim() === "") {
-      setContentError("内容は必須です。");
-      hasError = true;
-    }
+  })
 
-    if (hasError) return;
+  // SWRで投稿データを取得
+  const { data, isLoading, error, mutate } = useFetch<{ post: PostShowResponse["post"] }>(
+    id ? `/api/admin/posts/${id}` : ""
+  )
 
-    const body: UpdatePostRequestBody = {
-      title: title,
-      content: content,
-      categories: selectedCategories,
-      thumbnailUrl: thumbnailUrl,
-    }
+
+  // 取得データをフォームに反映
+  useEffect(() => {
+    if (!data?.post) return
+    const { title, content, postCategories, thumbnailImageKey } = data.post
+    form.reset({
+      title,
+      content,
+      postCategories: (postCategories ?? []).map(pc => ({ id: pc.category.id })),
+      thumbnailImageKey,
+    })
+  }, [data])
+
+  const onSubmit = async (values: CreatePostRequestBody) => {
+    if (!token) return
 
     // 更新
     try {
+      const { title, content, postCategories, thumbnailImageKey } = values;
+      const body: UpdatePostRequestBody = {
+        title,
+        content,
+        postCategories,
+        thumbnailImageKey,
+      }
+
       const res = await fetch(`/api/admin/posts/${id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token,
           },
           body: JSON.stringify(body),
         }
@@ -72,24 +83,26 @@ export default function PostEditPage() {
         alert(`更新失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
   const onDelete = async () => {
-    setIsSubmitting(true);
+    if (!token) return
 
     if (!id) {
       alert('IDがありません');
       return;
     }
-    if (!confirm('このカテゴリーを本当に削除しますか？')) return;
+    if (!confirm('この投稿を本当に削除しますか？')) return;
 
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
+
       if (res.ok) {
         router.push('/admin/posts')
         alert("削除しました");
@@ -103,58 +116,20 @@ export default function PostEditPage() {
         alert(`削除失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
 
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        //投稿ページ取得
-        const res = await fetch(`/api/admin/posts/${id}`)
-        const { post }: { post: PostShowResponse["post"] } = await res.json()//分割代入して型定義しているだけ
-        setTitle(post.title);
-        setContent(post.content);
-        setThumbnailUrl(post.thumbnailUrl);
-        // postCategories は { category: { id, name } }[] の形なので
-        // クライアントで扱う Category[] に変換してセットする
-        setSelectedCategories((post.postCategories ?? []).map((pc) => pc.category))
-
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-    fetcher();
-  }, []);
-
-
-  if (isSubmitting) {
-    return <div>送信中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div className="max-w-3xl mx-auto py-20">
       <h1 className="text-xl font-bold mb-10">記事編集</h1>
       <PostForm mode="edit"
-        title={title}
-        setTitle={setTitle}
-        titleError={titleError}
-        content={content}
-        setContent={setContent}
-        contentError={contentError}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
-        categories={categories}
-        setCategories={setCategories}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
+        form={form}
         onSubmit={onSubmit}
         onDelete={onDelete}
-        disabled={isSubmitting}
       />
     </div>
-
   );
 };

@@ -1,50 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from 'next/navigation'
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 import { UpdateCategoryRequestBody } from "@/app/api/admin/categories/[id]/route";
 import { CategoryShowResponse } from "@/app/api/admin/categories/[id]/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useForm } from "react-hook-form"
+import { categorySchema } from "../_libs/categorySchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 export default function CategoryEditPage() {
-  const [categoryNameError, setCategoryNameError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
   const { id } = useParams()
   const router = useRouter()
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
-    setIsSubmitting(true);
-
-    let hasError = false;
-
-    if (categoryName.trim() === "") {
-      setCategoryNameError("カテゴリー名を入力してください。");
-      hasError = true;
+  const { token } = useSupabaseSession()
+  const form = useForm<UpdateCategoryRequestBody>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
     }
+  })
 
-    if (hasError) return;
+  // SWRでカテゴリーデータを取得
+  const { data, isLoading, error, mutate } = useFetch<{ category: CategoryShowResponse["category"] }>(
+    id ? `/api/admin/categories/${id}` : ""
+  )
 
-    const body: UpdateCategoryRequestBody = { name: categoryName }
+  // 取得データをフォームに反映
+  useEffect(() => {
+    if (!data?.category) return
+    form.reset({ name: data.category.name })
+  }, [data])
+
+
+  const onSubmit = async (values: UpdateCategoryRequestBody) => {
+    if (!token) return
+
+    const { name } = values
 
     try {
+      const body: UpdateCategoryRequestBody = { name }
       const res = await fetch(`/api/admin/categories/${id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token,
           },
-          body: JSON.stringify({
-            body,
-          }),
+          body: JSON.stringify(body),
         }
       );
       console.log(res.status);
       if (res.ok) {
         router.push('/admin/categories')
         alert("送信しました");
+        form.reset()
       } else {
         alert(`送信失敗${res.status}`);
       }
@@ -55,13 +68,10 @@ export default function CategoryEditPage() {
         alert(`送信失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
   const onDelete = async () => {
-    setIsSubmitting(true);
+    if (!token) return
 
     if (!id) {
       alert('IDがありません');
@@ -72,6 +82,10 @@ export default function CategoryEditPage() {
     try {
       const res = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
       });
       if (res.ok) {
         router.push('/admin/categories')
@@ -86,45 +100,21 @@ export default function CategoryEditPage() {
         alert(`削除失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
 
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const res = await fetch(`/api/admin/categories/${id}`)
-        const { category }: { category: CategoryShowResponse["category"] } = await res.json()
-
-        if (category) {
-          const { name } = category;
-          setCategoryName(name);
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-    fetcher();
-  }, []);
-
-
-  if (isSubmitting) {
-    return <div>送信中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div className="max-w-3xl mx-auto py-20">
       <h1 className="text-xl font-bold mb-10">カテゴリー編集</h1>
       <CategoryForm
         mode="edit"
-        categoryName={categoryName}
-        setCategoryName={setCategoryName}
-        categoryNameError={categoryNameError}
+        form={form}
         onSubmit={onSubmit}
         onDelete={onDelete}
-        disabled={isSubmitting} />
+      />
     </div>
   );
 };

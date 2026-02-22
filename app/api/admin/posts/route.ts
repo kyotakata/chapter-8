@@ -1,12 +1,14 @@
 import { prisma } from '@/app/_libs/prisma'
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { supabase } from '@/app/_libs/supabase'
 
 export type PostIndexResponse = {
   posts: {
     id: number
     title: string
     content: string
-    thumbnailUrl: string
+    thumbnailImageKey: string
     createdAt: Date
     updatedAt: Date
     postCategories: {
@@ -18,7 +20,17 @@ export type PostIndexResponse = {
   }[]
 }
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
+  // GET関数の引数からrequestを受け取り、その中にAuthorizationヘッダーが含まれているので、それを取り出す
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
   try {
     const posts = await prisma.post.findMany({
       include: {
@@ -51,8 +63,8 @@ export const GET = async () => {
 export type CreatePostRequestBody = {
   title: string
   content: string
-  categories: { id: number }[]
-  thumbnailUrl: string
+  postCategories: { id: number }[]
+  thumbnailImageKey: string
 }
 
 // 投稿作成APIのレスポンスの型
@@ -61,26 +73,36 @@ export type CreatePostResponse = {
 }
 
 // POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
+  // GET関数の引数からrequestを受け取り、その中にAuthorizationヘッダーが含まれているので、それを取り出す
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
   try {
     // リクエストのbodyを取得
     const body: CreatePostRequestBody = await request.json()
 
-    // bodyの中からtitle, content, categories, thumbnailUrlを取り出す
-    const { title, content, categories, thumbnailUrl } = body
+    // bodyの中からtitle, content, postCategories, thumbnailUrlを取り出す
+    const { title, content, postCategories, thumbnailImageKey } = body
 
     // 投稿をDBに生成
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
     // 記事とカテゴリーの中間テーブルのレコードをDBに生成
     // 本来複数同時生成には、createManyというメソッドがあるが、sqliteではcreateManyが使えないので、for文1つずつ実施
-    for (const category of categories) {
+    for (const category of postCategories) {
       await prisma.postCategory.create({
         data: {
           categoryId: category.id,

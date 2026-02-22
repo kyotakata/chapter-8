@@ -1,9 +1,11 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Category } from "@/app/api/admin/posts/[id]/route";
+import useSWR from "swr";
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -28,39 +30,19 @@ const homeTitleStyle: React.CSSProperties = {
   margin: '1rem'
 };
 
-
-const homePostDateStyle: React.CSSProperties = {
-  color: "#888",
-  marginBottom: "1rem",
-}
-
 const homePostTitleStyle: React.CSSProperties = {
   fontWeight: 'bold',
   marginBottom: "1rem",
 }
 
 
-
-
 export default function AdminCategoryPage() {
-  const [categories, setCategories] = useState<CategoryIndexResponse["categories"]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const res = await fetch('/api/admin/categories')
-        const { categories }: { categories: CategoryIndexResponse["categories"] } = await res.json()
-        setCategories(categories)
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, []);
+  const { data, isLoading, error, mutate } = useFetch<{ categories: CategoryIndexResponse["categories"] }>(
+    '/api/admin/categories'
+  )
 
-  if (loading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
@@ -72,7 +54,7 @@ export default function AdminCategoryPage() {
       </div>
       <div style={homeContainerStyle}>
         <ul>
-          {categories.map((cat) => (
+          {data?.categories.map((cat) => (
             <li style={homeListStyle} key={cat.id}>
               <Link href={`/admin/categories/${cat.id}`} style={homeLinkStyle}>
                 <div>

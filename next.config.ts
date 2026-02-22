@@ -16,7 +16,11 @@ const nextConfig: NextConfig = {
         hostname: 'images.microcms-assets.io',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'kgjqjxptvznnkngjkcnc.supabase.co',
+      },
     ],
   },
 };

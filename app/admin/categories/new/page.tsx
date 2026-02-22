@@ -1,30 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { CategoryForm } from "../_components/CategoryForm";
 import { useRouter } from 'next/navigation'
 import { CreateCategoryRequestBody } from "@/app/api/admin/categories/route";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useForm } from "react-hook-form"
+import { categorySchema } from "../_libs/categorySchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function CategoryCreatePage() {
-  const [categoryNameError, setCategoryNameError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
   const router = useRouter()
+  const { token } = useSupabaseSession()
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    // 画面リロードを防ぐ
-    setIsSubmitting(true);
-
-    let hasError = false;
-
-    if (categoryName.trim() === "") {
-      setCategoryNameError("カテゴリー名を入力してください。");
-      hasError = true;
+  const form = useForm<CreateCategoryRequestBody>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
     }
+  })
 
-    if (hasError) return;
+  if (!token) return
 
-    const body: CreateCategoryRequestBody = { name: categoryName }// categoryNameをnameにすると{ name }という書き方(省略)ができる
+  const onSubmit = async (values: CreateCategoryRequestBody) => {
+    if (!token) return
+
+    const { name } = values
+    const body: CreateCategoryRequestBody = { name }
 
     try {
       const res = await fetch(`/api/admin/categories`,
@@ -32,6 +33,7 @@ export default function CategoryCreatePage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token, // Header に token を付与
           },
           body: JSON.stringify(body),
         }
@@ -40,6 +42,7 @@ export default function CategoryCreatePage() {
       if (res.ok) {
         router.push('/admin/categories')
         alert("送信しました");
+        form.reset()
       } else {
         alert(`送信失敗${res.status}`);
       }
@@ -50,12 +53,9 @@ export default function CategoryCreatePage() {
         alert(`送信失敗`);
       }
     }
-    finally {
-      setIsSubmitting(false);
-    }
   };
 
-  if (isSubmitting) {
+  if (form.formState.isSubmitting) {
     return <div>送信中...</div>;
   }
 
@@ -64,11 +64,9 @@ export default function CategoryCreatePage() {
       <h1 className="text-xl font-bold mb-10">カテゴリー作成</h1>
       <CategoryForm
         mode="new"
-        categoryName={categoryName}
-        setCategoryName={setCategoryName}
-        categoryNameError={categoryNameError}
+        form={form}
         onSubmit={onSubmit}
-        disabled={isSubmitting} />
+      />
     </div>
   );
 };

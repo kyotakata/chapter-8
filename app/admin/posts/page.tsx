@@ -1,9 +1,10 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { PostIndexResponse } from "@/app/api/admin/posts/route";
-
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useFetch } from "@/app/_hooks/useFetch"
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -39,27 +40,13 @@ const homePostTitleStyle: React.CSSProperties = {
 }
 
 
-
-
 export default function AdminPostPage() {
-  const [posts, setPosts] = useState<PostIndexResponse["posts"]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-    const fetcher = async () => {
-      try {
-        const res = await fetch('/api/admin/posts')
-        const { posts }: { posts: PostIndexResponse["posts"] } = await res.json()
-        setPosts(posts)
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetcher();
-  }, []);
+  const { data, isLoading, error, mutate } = useFetch<{ posts: PostIndexResponse["posts"] }>(
+    '/api/admin/posts'
+  )
 
-  if (loading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
@@ -71,7 +58,7 @@ export default function AdminPostPage() {
       </div>
       <div style={homeContainerStyle}>
         <ul>
-          {posts.map((post) => (
+          {data?.posts.map((post) => (
             <li style={homeListStyle} key={post.id}>
               <Link href={`/admin/posts/${post.id}`} style={homeLinkStyle}>
                 <div>
