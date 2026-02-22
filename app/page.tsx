@@ -3,6 +3,7 @@
 import Link from "next/link";
 import useSWR from "swr";
 import type { PostsIndexResponse } from "@/app/api/posts/route";
+import { publicFetcher } from "@/app/_libs/fetcher"
 
 const homeContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -72,16 +73,11 @@ const homePostBodyStyle: React.CSSProperties = {
   maxHeight: "60px",
 }
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
 
 export default function Page() {
   const { data, isLoading, error, mutate } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
     '/api/posts',
-    fetcher
+    publicFetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

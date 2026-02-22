@@ -4,6 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { PostIndexResponse } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { authFetcher } from "@/app/_libs/fetcher"
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -39,23 +40,12 @@ const homePostTitleStyle: React.CSSProperties = {
 }
 
 
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token
-    }
-  })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
-
 export default function AdminPostPage() {
   const { token } = useSupabaseSession()
 
   const { data, isLoading, error, mutate } = useSWR<{ posts: PostIndexResponse["posts"] }>(
     token ? ['/api/admin/posts', token] : null,
-    fetcher
+    authFetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

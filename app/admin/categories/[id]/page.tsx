@@ -12,18 +12,8 @@ import { categorySchema } from "../_libs/categorySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormValues } from "../_components/CategoryForm"
 import useSWR from "swr";
+import { authFetcher } from "@/app/_libs/fetcher"
 
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token
-    }
-  })
-
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
 
 export default function CategoryEditPage() {
   const { id } = useParams()
@@ -39,7 +29,7 @@ export default function CategoryEditPage() {
   // SWRでカテゴリーデータを取得
   const { data, isLoading, error, mutate } = useSWR<{ category: CategoryShowResponse["category"] }>(
     token ? [`/api/admin/categories/${id}`, token] : null,
-    fetcher)
+    authFetcher)
 
   // 取得データをフォームに反映
   useEffect(() => {

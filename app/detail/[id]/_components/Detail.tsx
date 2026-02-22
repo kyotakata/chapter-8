@@ -6,6 +6,7 @@ import useSWR from "swr";
 import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
 import { supabase } from "@/app/_libs/supabase";
+import { publicFetcher } from "@/app/_libs/fetcher"
 
 const detailContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -66,18 +67,13 @@ const detailPostBodyStyle: React.CSSProperties = {
   overflow: "hidden",
 }
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
 
 export const Detail = () => {
   const params = useParams();
   const id = params?.id as string | undefined;
   const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
     id ? `/api/posts/${id}` : null,
-    fetcher
+    publicFetcher
   )
   const post = data?.post
 

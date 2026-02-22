@@ -4,6 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { authFetcher } from "@/app/_libs/fetcher"
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -34,25 +35,13 @@ const homePostTitleStyle: React.CSSProperties = {
 }
 
 
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token
-    }
-  })
-
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
-
 export default function AdminCategoryPage() {
   const { token } = useSupabaseSession()
 
 
   const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
     token ? ['/api/admin/categories', token] : null,
-    fetcher
+    authFetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

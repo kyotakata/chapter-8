@@ -12,18 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../_libs/postSchema"
 import { FormValues } from "../_components/PostForm";
 import useSWR from "swr";
+import { authFetcher } from "@/app/_libs/fetcher"
 
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token
-    }
-  })
-
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
 
 export default function PostEditPage() {
   const { id } = useParams()
@@ -42,7 +32,7 @@ export default function PostEditPage() {
   // SWRで投稿データを取得
   const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
     token ? [`/api/admin/posts/${id}`, token] : null,
-    fetcher
+    authFetcher
   )
 
   // 取得データをフォームに反映

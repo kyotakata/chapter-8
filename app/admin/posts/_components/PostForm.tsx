@@ -8,6 +8,7 @@ import Image from "next/image"
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route"
 import { UseFormReturn } from "react-hook-form";
 import useSWR from "swr";
+import { authFetcher } from "@/app/_libs/fetcher"
 
 export type FormValues = {
   title: string,
@@ -23,17 +24,6 @@ interface Props {
   onDelete?: () => void    // ?で引数指定なしでもよくなる
 }
 
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token
-    }
-  })
-
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
-}
 
 export const PostForm: React.FC<Props> = ({
   mode,
@@ -49,7 +39,7 @@ export const PostForm: React.FC<Props> = ({
   // SWRでカテゴリー一覧を取得
   const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
     token ? ['/api/admin/categories', token] : null,
-    fetcher
+    authFetcher
   )
 
 

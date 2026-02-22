@@ -2,7 +2,7 @@
 import { UseFormReturn } from "react-hook-form"
 
 export type FormValues = {
-  name: string,
+  name: string
 }
 
 interface Props {
