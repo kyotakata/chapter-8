@@ -10,16 +10,16 @@ import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useForm } from "react-hook-form"
 import { categorySchema } from "../_libs/categorySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormValues } from "../_components/CategoryForm"
 import useSWR from "swr";
 import { authFetcher } from "@/app/_libs/fetcher"
+import { CreateCategoryRequestBody } from "@/app/api/admin/categories/route";
 
 
 export default function CategoryEditPage() {
   const { id } = useParams()
   const router = useRouter()
   const { token } = useSupabaseSession()
-  const form = useForm<FormValues>({
+  const form = useForm<UpdateCategoryRequestBody>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
@@ -38,7 +38,7 @@ export default function CategoryEditPage() {
   }, [data])
 
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: UpdateCategoryRequestBody) => {
     if (!token) return
 
     const { name } = values

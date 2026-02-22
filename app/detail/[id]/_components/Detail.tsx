@@ -93,7 +93,9 @@ export const Detail = () => {
     <div style={detailContainerStyle}>
       <div style={detailPostStyle}>
         <div style={detailPostImageStyle}>
-          <Image src={thumbnailImageUrl || ""} alt="thumbnail" width={400} height={400} />
+          {thumbnailImageUrl && (
+            <Image src={thumbnailImageUrl} alt="thumbnail" width={400} height={400} />
+          )}
         </div>
         <div style={detailPostContentStyle}>
           <div style={detailPostInfoStyle}>

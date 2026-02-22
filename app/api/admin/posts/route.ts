@@ -63,7 +63,7 @@ export const GET = async (request: NextRequest) => {
 export type CreatePostRequestBody = {
   title: string
   content: string
-  categories: { id: number }[]
+  postCategories: { id: number }[]
   thumbnailImageKey: string
 }
 
@@ -88,8 +88,8 @@ export const POST = async (request: NextRequest) => {
     // リクエストのbodyを取得
     const body: CreatePostRequestBody = await request.json()
 
-    // bodyの中からtitle, content, categories, thumbnailUrlを取り出す
-    const { title, content, categories, thumbnailImageKey } = body
+    // bodyの中からtitle, content, postCategories, thumbnailUrlを取り出す
+    const { title, content, postCategories, thumbnailImageKey } = body
 
     // 投稿をDBに生成
     const data = await prisma.post.create({
@@ -102,7 +102,7 @@ export const POST = async (request: NextRequest) => {
 
     // 記事とカテゴリーの中間テーブルのレコードをDBに生成
     // 本来複数同時生成には、createManyというメソッドがあるが、sqliteではcreateManyが使えないので、for文1つずつ実施
-    for (const category of categories) {
+    for (const category of postCategories) {
       await prisma.postCategory.create({
         data: {
           categoryId: category.id,

@@ -1,14 +1,12 @@
 "use client";
 import { UseFormReturn } from "react-hook-form"
+import { UpdateCategoryRequestBody } from "@/app/api/admin/categories/[id]/route";
 
-export type FormValues = {
-  name: string
-}
 
 interface Props {
   mode: "new" | "edit"    // 文字列リテラル型のunion型のイメージ
-  form: UseFormReturn<FormValues>
-  onSubmit: (values: FormValues) => void
+  form: UseFormReturn<UpdateCategoryRequestBody>
+  onSubmit: (values: UpdateCategoryRequestBody) => void
   onDelete?: () => void    // ?で引数指定なしでもよくなる
 }
 

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { PostForm } from "../_components/PostForm";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import { FormValues } from "../_components/PostForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../_libs/postSchema"
@@ -14,7 +13,7 @@ import { postSchema } from "../_libs/postSchema"
 export default function PostCreatePage() {
   const router = useRouter()
   const { token } = useSupabaseSession()
-  const form = useForm<FormValues>({
+  const form = useForm<CreatePostRequestBody>({
     resolver: zodResolver(postSchema),
     defaultValues: {
       title: "",
@@ -25,16 +24,16 @@ export default function PostCreatePage() {
   })
 
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: CreatePostRequestBody) => {
     if (!token) return
 
     try {
       const { title, content, postCategories, thumbnailImageKey } = values;
       const body: CreatePostRequestBody = {
-        title: title,
-        content: content,
-        categories: postCategories,
-        thumbnailImageKey: thumbnailImageKey,
+        title,
+        content,
+        postCategories,
+        thumbnailImageKey,
       }
 
       const res = await fetch(`/api/admin/posts`,

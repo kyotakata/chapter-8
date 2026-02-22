@@ -80,7 +80,7 @@ export const GET = async (
 export type UpdatePostRequestBody = {
   title: string
   content: string
-  categories: { id: number }[]
+  postCategories: { id: number }[]
   thumbnailImageKey: string
 }
 
@@ -102,7 +102,7 @@ export const PUT = async (
   // paramsの中にidが入っているので、それを取り出す
   const { id } = await params
   // リクエストのbodyを取得
-  const { title, content, categories, thumbnailImageKey }: UpdatePostRequestBody = await request.json()
+  const { title, content, postCategories, thumbnailImageKey }: UpdatePostRequestBody = await request.json()
 
   try {
     // idを指定して、Postを更新
@@ -126,7 +126,7 @@ export const PUT = async (
 
     // 記事とカテゴリーの中間テーブルのレコードをDBに生成
     // 本来複数同時生成には、createManyというメソッドがあるが、sqliteではcreateManyが使えないので、for文1つずつ実施
-    for (const category of categories) {
+    for (const category of postCategories) {
       await prisma.postCategory.create({
         data: {
           postId: post.id,

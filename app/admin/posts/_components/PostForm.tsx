@@ -9,18 +9,13 @@ import { CategoryIndexResponse } from "@/app/api/admin/categories/route"
 import { UseFormReturn } from "react-hook-form";
 import useSWR from "swr";
 import { authFetcher } from "@/app/_libs/fetcher"
+import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 
-export type FormValues = {
-  title: string,
-  content: string,
-  postCategories: { id: number }[],
-  thumbnailImageKey: string,
-}
 
 interface Props {
   mode: "new" | "edit"    // 文字列リテラル型のunion型のイメージ
-  form: UseFormReturn<FormValues>
-  onSubmit: (values: FormValues) => void
+  form: UseFormReturn<CreatePostRequestBody>
+  onSubmit: (values: CreatePostRequestBody) => void
   onDelete?: () => void    // ?で引数指定なしでもよくなる
 }
 

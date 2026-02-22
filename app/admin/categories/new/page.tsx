@@ -7,13 +7,12 @@ import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useForm } from "react-hook-form"
 import { categorySchema } from "../_libs/categorySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormValues } from "../_components/CategoryForm"
 
 export default function CategoryCreatePage() {
   const router = useRouter()
   const { token } = useSupabaseSession()
 
-  const form = useForm<FormValues>({
+  const form = useForm<CreateCategoryRequestBody>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
@@ -22,7 +21,7 @@ export default function CategoryCreatePage() {
 
   if (!token) return
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: CreateCategoryRequestBody) => {
     if (!token) return
 
     const { name } = values

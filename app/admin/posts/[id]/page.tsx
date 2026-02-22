@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import { PostShowResponse } from "@/app/api/admin/posts/[id]/route";
 import { PostForm } from "../_components/PostForm";
 import { UpdatePostRequestBody } from "@/app/api/admin/posts/[id]/route";
+import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../_libs/postSchema"
-import { FormValues } from "../_components/PostForm";
 import useSWR from "swr";
 import { authFetcher } from "@/app/_libs/fetcher"
 
@@ -19,7 +19,7 @@ export default function PostEditPage() {
   const { id } = useParams()
   const router = useRouter()
   const { token } = useSupabaseSession()
-  const form = useForm<FormValues>({
+  const form = useForm<CreatePostRequestBody>({
     resolver: zodResolver(postSchema),
     defaultValues: {
       title: "",
@@ -47,7 +47,7 @@ export default function PostEditPage() {
     })
   }, [data])
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: CreatePostRequestBody) => {
     if (!token) return
 
     // 更新
@@ -56,8 +56,8 @@ export default function PostEditPage() {
       const body: UpdatePostRequestBody = {
         title,
         content,
-        categories: postCategories,
-        thumbnailImageKey: thumbnailImageKey,
+        postCategories,
+        thumbnailImageKey,
       }
 
       const res = await fetch(`/api/admin/posts/${id}`,
