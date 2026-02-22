@@ -66,13 +66,18 @@ const detailPostBodyStyle: React.CSSProperties = {
   overflow: "hidden",
 }
 
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
+
 export const Detail = () => {
   const params = useParams();
   const id = params?.id as string | undefined;
-
-  const { data, isLoading } = useSWR<{ post: PostShowResponse["post"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
     id ? `/api/posts/${id}` : null,
-    (url: string) => fetch(url).then(res => res.json())
+    fetcher
   )
   const post = data?.post
 
@@ -85,13 +90,9 @@ export const Detail = () => {
     return publicUrl
   }, [post?.thumbnailImageKey])
 
-  if (isLoading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error || !post) return <div>読み込めませんでした...</div>;
 
-  if (!post) {
-    return <div>記事が見つかりませんでした</div>;
-  }
   return (
     <div style={detailContainerStyle}>
       <div style={detailPostStyle}>

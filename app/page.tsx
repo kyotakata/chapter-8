@@ -72,12 +72,16 @@ const homePostBodyStyle: React.CSSProperties = {
   maxHeight: "60px",
 }
 
-
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
 
 export default function Page() {
   const { data, isLoading, error, mutate } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
     '/api/posts',
-    (url: string) => fetch(url).then(res => res.json())
+    fetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

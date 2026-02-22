@@ -39,16 +39,23 @@ const homePostTitleStyle: React.CSSProperties = {
 }
 
 
-
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    }
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
 
 export default function AdminPostPage() {
   const { token } = useSupabaseSession()
 
   const { data, isLoading, error, mutate } = useSWR<{ posts: PostIndexResponse["posts"] }>(
     token ? ['/api/admin/posts', token] : null,
-    ([url, token]: [string, string]) => fetch(url, {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-    }).then(res => res.json())
+    fetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

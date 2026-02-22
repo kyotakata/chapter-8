@@ -1,9 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { contactSchema } from "../_libs/contactSchema";
-import { SubmitHandler, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 
 type FormValues = {
   name: string

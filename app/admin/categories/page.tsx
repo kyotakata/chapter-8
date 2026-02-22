@@ -28,28 +28,31 @@ const homeTitleStyle: React.CSSProperties = {
   margin: '1rem'
 };
 
-
-const homePostDateStyle: React.CSSProperties = {
-  color: "#888",
-  marginBottom: "1rem",
-}
-
 const homePostTitleStyle: React.CSSProperties = {
   fontWeight: 'bold',
   marginBottom: "1rem",
 }
 
 
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    }
+  })
 
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
 
 export default function AdminCategoryPage() {
   const { token } = useSupabaseSession()
 
+
   const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
     token ? ['/api/admin/categories', token] : null,
-    ([url, token]: [string, string]) => fetch(url, {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-    }).then(res => res.json())
+    fetcher
   )
 
   if (isLoading) return <div>読み込み中...</div>;

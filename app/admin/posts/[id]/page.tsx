@@ -13,6 +13,18 @@ import { postSchema } from "../_libs/postSchema"
 import { FormValues } from "../_components/PostForm";
 import useSWR from "swr";
 
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    }
+  })
+
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
+
 export default function PostEditPage() {
   const { id } = useParams()
   const router = useRouter()
@@ -28,11 +40,9 @@ export default function PostEditPage() {
   })
 
   // SWRで投稿データを取得
-  const { data } = useSWR<{ post: PostShowResponse["post"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
     token ? [`/api/admin/posts/${id}`, token] : null,
-    ([url, token]: [string, string]) => fetch(url, {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-    }).then(res => res.json())
+    fetcher
   )
 
   // 取得データをフォームに反映
@@ -103,6 +113,7 @@ export default function PostEditPage() {
           Authorization: token,
         },
       });
+
       if (res.ok) {
         router.push('/admin/posts')
         alert("削除しました");
@@ -119,9 +130,8 @@ export default function PostEditPage() {
   };
 
 
-  if (form.formState.isSubmitting) {
-    return <div>送信中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div className="max-w-3xl mx-auto py-20">

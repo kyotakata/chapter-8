@@ -13,6 +13,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormValues } from "../_components/CategoryForm"
 import useSWR from "swr";
 
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    }
+  })
+
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
 
 export default function CategoryEditPage() {
   const { id } = useParams()
@@ -26,12 +37,9 @@ export default function CategoryEditPage() {
   })
 
   // SWRでカテゴリーデータを取得
-  const { data } = useSWR<{ category: CategoryShowResponse["category"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ category: CategoryShowResponse["category"] }>(
     token ? [`/api/admin/categories/${id}`, token] : null,
-    ([url, token]: [string, string]) => fetch(url, {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-    }).then(res => res.json())
-  )
+    fetcher)
 
   // 取得データをフォームに反映
   useEffect(() => {
@@ -107,9 +115,8 @@ export default function CategoryEditPage() {
   };
 
 
-  if (form.formState.isSubmitting) {
-    return <div>送信中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div className="max-w-3xl mx-auto py-20">

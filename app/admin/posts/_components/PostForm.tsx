@@ -1,6 +1,5 @@
 "use client";
 
-import { Category } from "@/app/api/admin/posts/[id]/route"
 import { ChangeEvent, useMemo } from "react";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { supabase } from '@/app/_libs/supabase'
@@ -24,6 +23,18 @@ interface Props {
   onDelete?: () => void    // ?で引数指定なしでもよくなる
 }
 
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    }
+  })
+
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
+
 export const PostForm: React.FC<Props> = ({
   mode,
   form,
@@ -36,13 +47,11 @@ export const PostForm: React.FC<Props> = ({
   const postCategories = watch("postCategories") || []
 
   // SWRでカテゴリー一覧を取得
-  const { data: categoriesData } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
     token ? ['/api/admin/categories', token] : null,
-    ([url, token]: [string, string]) => fetch(url, {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-    }).then(res => res.json())
+    fetcher
   )
-  const categories = categoriesData?.categories ?? []
+
 
   // thumbnailImageKeyからSupabaseの画像URLを導出
   const thumbnailImageUrl = useMemo(() => {
@@ -92,11 +101,14 @@ export const PostForm: React.FC<Props> = ({
       return
     }
     // 選択カテゴリに同じカテゴリIDがない場合
-    const category = categories.find((c) => c.id === id)
+    const category = categories?.find((c) => c.id === id)
     if (!category) return
     setValue("postCategories", [...postCategories, { id: category.id }])
   }
 
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
+  const categories = data?.categories
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
