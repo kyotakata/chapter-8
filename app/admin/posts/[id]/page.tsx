@@ -11,8 +11,7 @@ import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../_libs/postSchema"
-import useSWR from "swr";
-import { authFetcher } from "@/app/_libs/fetcher"
+import { useFetch } from "@/app/_hooks/useFetch"
 
 
 export default function PostEditPage() {
@@ -30,10 +29,10 @@ export default function PostEditPage() {
   })
 
   // SWRで投稿データを取得
-  const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
-    token ? [`/api/admin/posts/${id}`, token] : null,
-    authFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ post: PostShowResponse["post"] }>(
+    id ? `/api/admin/posts/${id}` : ""
   )
+
 
   // 取得データをフォームに反映
   useEffect(() => {

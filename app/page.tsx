@@ -1,9 +1,9 @@
 "use client"; // クライアントコンポーネントになると、useState,useEffect,クリックイベントonClickなど,ブラウザ依存の処理 が使えます。
 
 import Link from "next/link";
-import useSWR from "swr";
 import type { PostsIndexResponse } from "@/app/api/posts/route";
-import { publicFetcher } from "@/app/_libs/fetcher"
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const homeContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -75,9 +75,8 @@ const homePostBodyStyle: React.CSSProperties = {
 
 
 export default function Page() {
-  const { data, isLoading, error, mutate } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
-    '/api/posts',
-    publicFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ posts: PostsIndexResponse["posts"] }>(
+    '/api/posts'
   )
 
   if (isLoading) return <div>読み込み中...</div>;

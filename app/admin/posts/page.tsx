@@ -4,7 +4,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { PostIndexResponse } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import { authFetcher } from "@/app/_libs/fetcher"
+import { useFetch } from "@/app/_hooks/useFetch"
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -41,11 +41,8 @@ const homePostTitleStyle: React.CSSProperties = {
 
 
 export default function AdminPostPage() {
-  const { token } = useSupabaseSession()
-
-  const { data, isLoading, error, mutate } = useSWR<{ posts: PostIndexResponse["posts"] }>(
-    token ? ['/api/admin/posts', token] : null,
-    authFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ posts: PostIndexResponse["posts"] }>(
+    '/api/admin/posts'
   )
 
   if (isLoading) return <div>読み込み中...</div>;

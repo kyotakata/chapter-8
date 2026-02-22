@@ -10,9 +10,7 @@ import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useForm } from "react-hook-form"
 import { categorySchema } from "../_libs/categorySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useSWR from "swr";
-import { authFetcher } from "@/app/_libs/fetcher"
-import { CreateCategoryRequestBody } from "@/app/api/admin/categories/route";
+import { useFetch } from "@/app/_hooks/useFetch"
 
 
 export default function CategoryEditPage() {
@@ -27,9 +25,9 @@ export default function CategoryEditPage() {
   })
 
   // SWRでカテゴリーデータを取得
-  const { data, isLoading, error, mutate } = useSWR<{ category: CategoryShowResponse["category"] }>(
-    token ? [`/api/admin/categories/${id}`, token] : null,
-    authFetcher)
+  const { data, isLoading, error, mutate } = useFetch<{ category: CategoryShowResponse["category"] }>(
+    id ? `/api/admin/categories/${id}` : ""
+  )
 
   // 取得データをフォームに反映
   useEffect(() => {

@@ -7,10 +7,8 @@ import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
 import Image from "next/image"
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route"
 import { UseFormReturn } from "react-hook-form";
-import useSWR from "swr";
-import { authFetcher } from "@/app/_libs/fetcher"
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
-
+import { useFetch } from "@/app/_hooks/useFetch"
 
 interface Props {
   mode: "new" | "edit"    // 文字列リテラル型のunion型のイメージ
@@ -32,9 +30,8 @@ export const PostForm: React.FC<Props> = ({
   const postCategories = watch("postCategories") || []
 
   // SWRでカテゴリー一覧を取得
-  const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
-    token ? ['/api/admin/categories', token] : null,
-    authFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ categories: CategoryIndexResponse["categories"] }>(
+    '/api/admin/categories'
   )
 
 

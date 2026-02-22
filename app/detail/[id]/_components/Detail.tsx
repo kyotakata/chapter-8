@@ -6,7 +6,8 @@ import useSWR from "swr";
 import type { PostShowResponse } from "@/app/api/posts/[id]/route";
 import Image from "next/image";
 import { supabase } from "@/app/_libs/supabase";
-import { publicFetcher } from "@/app/_libs/fetcher"
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const detailContainerStyle: React.CSSProperties = {
   margin: "40px auto",
@@ -71,9 +72,8 @@ const detailPostBodyStyle: React.CSSProperties = {
 export const Detail = () => {
   const params = useParams();
   const id = params?.id as string | undefined;
-  const { data, isLoading, error, mutate } = useSWR<{ post: PostShowResponse["post"] }>(
-    id ? `/api/posts/${id}` : null,
-    publicFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ post: PostShowResponse["post"] }>(
+    id ? `/api/posts/${id}` : "",
   )
   const post = data?.post
 

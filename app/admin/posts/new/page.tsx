@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Category } from "@/app/api/admin/posts/[id]/route"
 import { useRouter } from 'next/navigation'
 import { PostForm } from "../_components/PostForm";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";

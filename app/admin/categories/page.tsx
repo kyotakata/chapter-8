@@ -4,7 +4,8 @@ import Link from "next/link";
 import useSWR from "swr";
 import { CategoryIndexResponse } from "@/app/api/admin/categories/route";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import { authFetcher } from "@/app/_libs/fetcher"
+import { useFetch } from "@/app/_hooks/useFetch"
+
 
 const homeContainerStyle: React.CSSProperties = {
   marginTop: '4rem'
@@ -36,12 +37,8 @@ const homePostTitleStyle: React.CSSProperties = {
 
 
 export default function AdminCategoryPage() {
-  const { token } = useSupabaseSession()
-
-
-  const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
-    token ? ['/api/admin/categories', token] : null,
-    authFetcher
+  const { data, isLoading, error, mutate } = useFetch<{ categories: CategoryIndexResponse["categories"] }>(
+    '/api/admin/categories'
   )
 
   if (isLoading) return <div>読み込み中...</div>;
