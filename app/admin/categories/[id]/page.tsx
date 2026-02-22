@@ -36,7 +36,7 @@ export default function CategoryEditPage() {
   // 取得データをフォームに反映
   useEffect(() => {
     if (!data?.category) return
-    form.setValue("name", data.category.name)
+    form.reset({ name: data.category.name })
   }, [data])
 
 

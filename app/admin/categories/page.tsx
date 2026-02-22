@@ -45,17 +45,15 @@ const homePostTitleStyle: React.CSSProperties = {
 export default function AdminCategoryPage() {
   const { token } = useSupabaseSession()
 
-  const { data, isLoading } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ categories: CategoryIndexResponse["categories"] }>(
     token ? ['/api/admin/categories', token] : null,
     ([url, token]: [string, string]) => fetch(url, {
       headers: { 'Content-Type': 'application/json', Authorization: token },
     }).then(res => res.json())
   )
-  const categories = data?.categories ?? []
 
-  if (isLoading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
@@ -67,7 +65,7 @@ export default function AdminCategoryPage() {
       </div>
       <div style={homeContainerStyle}>
         <ul>
-          {categories.map((cat) => (
+          {data?.categories.map((cat) => (
             <li style={homeListStyle} key={cat.id}>
               <Link href={`/admin/categories/${cat.id}`} style={homeLinkStyle}>
                 <div>

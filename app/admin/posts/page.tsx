@@ -44,17 +44,15 @@ const homePostTitleStyle: React.CSSProperties = {
 export default function AdminPostPage() {
   const { token } = useSupabaseSession()
 
-  const { data, isLoading } = useSWR<{ posts: PostIndexResponse["posts"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ posts: PostIndexResponse["posts"] }>(
     token ? ['/api/admin/posts', token] : null,
     ([url, token]: [string, string]) => fetch(url, {
       headers: { 'Content-Type': 'application/json', Authorization: token },
     }).then(res => res.json())
   )
-  const posts = data?.posts ?? []
 
-  if (isLoading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
@@ -66,7 +64,7 @@ export default function AdminPostPage() {
       </div>
       <div style={homeContainerStyle}>
         <ul>
-          {posts.map((post) => (
+          {data?.posts.map((post) => (
             <li style={homeListStyle} key={post.id}>
               <Link href={`/admin/posts/${post.id}`} style={homeLinkStyle}>
                 <div>

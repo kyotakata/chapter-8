@@ -75,21 +75,19 @@ const homePostBodyStyle: React.CSSProperties = {
 
 
 export default function Page() {
-  const { data, isLoading } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ posts: PostsIndexResponse["posts"] }>(
     '/api/posts',
     (url: string) => fetch(url).then(res => res.json())
   )
-  const posts = data?.posts ?? []
 
-  if (isLoading) {
-    return <div>読み込み中...</div>;
-  }
+  if (isLoading) return <div>読み込み中...</div>;
+  if (error) return <div>読み込めませんでした</div>;
 
   return (
     <div>
       <div style={homeContainerStyle}>
         <ul>
-          {posts?.map((post) => (
+          {data?.posts?.map((post) => (
             <li style={homeListStyle} key={post.id}>
               <Link href={`/detail/${post.id}`} style={homeLinkStyle}>
                 <div style={homePostStyle}>
